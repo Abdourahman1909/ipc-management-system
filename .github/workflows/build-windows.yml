@@ -25,10 +25,10 @@ jobs:
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -66,7 +66,7 @@ jobs:
           Copy-Item THIRD_PARTY_NOTICES.md dist/IPC_Yonetim_Sistemi_Windows/
 
       - name: Upload Windows package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: IPC_Yonetim_Sistemi_Windows
           path: dist/IPC_Yonetim_Sistemi_Windows/
