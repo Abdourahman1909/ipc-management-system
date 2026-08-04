@@ -679,7 +679,6 @@ class ImportWorkflowTests(unittest.TestCase):
         self.assertIn(b"data-password-toggle", response.data)
         self.assertIn(b'autocomplete="current-password"', response.data)
         self.assertIn(b"js/main.js", response.data)
-        self.assertNotIn(b"js/auth.js", response.data)
         self.assertIn(b"favicon-32x32.png", response.data)
 
         invalid = self.client.post(

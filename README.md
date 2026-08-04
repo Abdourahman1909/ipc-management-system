@@ -64,7 +64,7 @@ Browser clients on the private LAN
 
 | Area | Technologies |
 | --- | --- |
-| Backend | Python, Flask, SQLite, Waitress, Gunicorn |
+| Backend | Python, Flask, SQLite, Waitress |
 | Excel | openpyxl |
 | Reports | ReportLab, openpyxl, DejaVu fonts |
 | Frontend | Jinja2, HTML, CSS, JavaScript, Bootstrap, Chart.js |
@@ -146,11 +146,10 @@ perspective and coordinated its institutional use.
 
 ## Documentation
 
-- [Turkish project and operation guide](BENIOKU.md)
 - [Windows server setup](WINDOWS_KURULUM.md)
-- [Code guide](docs/code-guide/README.md)
 - [ER diagram](docs/er-diagram/README.md)
 - [Contributor statement](AUTHORS.md)
+- [Security policy](SECURITY.md)
 
 ## Responsible use and data safety
 

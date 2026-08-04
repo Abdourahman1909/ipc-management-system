@@ -66,7 +66,7 @@ licence:
 ## Runtime libraries
 
 The application depends on independently licensed open-source packages,
-including Flask, Werkzeug, itsdangerous, Waitress, Gunicorn, openpyxl,
+including Flask, Werkzeug, itsdangerous, Waitress, openpyxl,
 ReportLab, PyInstaller, Bootstrap, Bootstrap Icons, and Chart.js. Their names,
 licences, and source projects remain the property of their respective authors.
 See `backend/requirements.txt`, the HTML templates, and the Windows build
