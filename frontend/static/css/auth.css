@@ -1,0 +1,264 @@
+/* Kimlik doğrulama ekranları */
+:root {
+  --auth-burgundy: #8C1D2F;
+  --auth-burgundy-dark: #681322;
+  --auth-ink: #252A31;
+  --auth-muted: #5F6873;
+  --auth-line: #C9CFD7;
+  --auth-focus: #D4AD42;
+}
+
+* { box-sizing: border-box; }
+
+body.auth {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 1.25rem;
+  overflow-x: hidden;
+  color: var(--auth-ink);
+  background: #35131B;
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.5;
+}
+
+body.auth::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: url("../img/turkiye-koyu-hafif.jpg");
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.giris-perde {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    rgba(49, 25, 31, .72) 0%,
+    rgba(92, 15, 29, .76) 58%,
+    rgba(63, 18, 29, .84) 100%
+  );
+}
+
+.login-card {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 430px);
+  overflow: hidden;
+  border: 0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(20, 12, 15, .26);
+}
+
+.auth-brand {
+  padding: 1.55rem 1.55rem 1.15rem;
+  border-bottom: 1px solid #E2E5E9;
+  text-align: center;
+}
+
+.auth-brand img {
+  display: block;
+  width: min(100%, 252px);
+  height: auto;
+  margin: 0 auto 1rem;
+}
+
+.auth-brand h1 {
+  margin: 0;
+  color: var(--auth-ink);
+  font-size: 1.14rem;
+  font-weight: 700;
+  letter-spacing: -.015em;
+  text-wrap: balance;
+}
+
+.auth-brand p {
+  margin: .25rem 0 0;
+  color: var(--auth-muted);
+  font-size: .84rem;
+}
+
+.auth-content,
+.login-card .card-body {
+  padding: 1.35rem 1.5rem 1.45rem;
+}
+
+.auth-message {
+  display: flex;
+  align-items: flex-start;
+  gap: .55rem;
+  margin-bottom: 1rem;
+  padding: .72rem .8rem;
+  border: 1px solid;
+  border-radius: 8px;
+  font-size: .82rem;
+}
+
+.auth-message i { margin-top: .05rem; flex: 0 0 auto; }
+.auth-message-success { border-color: #A4C8B2; color: #175F37; background: #EEF7F2; }
+.auth-message-danger { border-color: #DDA7AF; color: #8A1C2D; background: #FFF2F4; }
+.auth-message-warning { border-color: #D8BD76; color: #705300; background: #FFF8E6; }
+.auth-message-info { border-color: #A9C4D6; color: #28546F; background: #F1F7FA; }
+
+.auth-form { display: grid; gap: 1rem; }
+.auth-field label,
+.login-card .form-label {
+  display: block;
+  margin-bottom: .38rem;
+  color: #363D46;
+  font-size: .84rem;
+  font-weight: 650;
+}
+
+.auth-input {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: stretch;
+  min-height: 46px;
+  overflow: hidden;
+  border: 1px solid var(--auth-line);
+  border-radius: 8px;
+  background: #fff;
+  transition: border-color .18s ease-out, box-shadow .18s ease-out;
+}
+
+.auth-input:focus-within {
+  border-color: var(--auth-burgundy);
+  box-shadow: 0 0 0 3px rgba(140, 29, 47, .13);
+}
+
+.auth-input-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid #DDE1E6;
+  color: #4C5662;
+  background: #F7F8FA;
+}
+
+.auth-input input {
+  width: 100%;
+  min-width: 0;
+  padding: .65rem .75rem;
+  border: 0;
+  outline: 0;
+  color: var(--auth-ink);
+  background: transparent;
+  font: inherit;
+  font-size: .9rem;
+}
+
+.auth-input input::placeholder {
+  color: #606A76;
+  opacity: 1;
+}
+
+.password-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  border: 0;
+  color: #4C5662;
+  background: transparent;
+}
+
+.password-toggle:hover { color: var(--auth-burgundy); background: #F7F8FA; }
+
+.auth-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  min-height: 46px;
+  margin-top: .1rem;
+  padding: .68rem 1rem;
+  border: 1px solid var(--auth-burgundy);
+  border-radius: 8px;
+  color: #fff;
+  background: var(--auth-burgundy);
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 700;
+  transition: background-color .18s ease-out, border-color .18s ease-out;
+}
+
+.auth-submit:hover { border-color: var(--auth-burgundy-dark); background: var(--auth-burgundy-dark); }
+.auth-submit:active { background: #55101C; }
+.auth-submit.disabled,
+.auth-submit:disabled { cursor: wait; opacity: .7; }
+
+.auth-link,
+.login-card a {
+  display: block;
+  width: fit-content;
+  margin: 1rem auto 0;
+  color: var(--auth-burgundy);
+  font-size: .82rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.auth-link:hover,
+.login-card a:hover { color: var(--auth-burgundy-dark); text-decoration: underline; }
+
+:where(.auth-input, .password-toggle, .auth-submit, .auth-link, .login-card a):focus-visible {
+  outline: 3px solid var(--auth-focus);
+  outline-offset: 2px;
+}
+
+/* Eski şifre kurtarma şablonlarıyla uyumluluk */
+.login-card .card-header {
+  padding: 1.35rem 1.5rem 0;
+  border: 0;
+  background: #fff;
+}
+
+.login-card .form-control {
+  min-height: 46px;
+  border-color: var(--auth-line);
+  border-radius: 8px;
+}
+
+.login-card .form-control:focus {
+  border-color: var(--auth-burgundy);
+  box-shadow: 0 0 0 3px rgba(140, 29, 47, .13);
+}
+
+.login-card .btn {
+  min-height: 46px;
+  border-radius: 8px;
+  transition: background-color .18s ease-out, border-color .18s ease-out;
+}
+
+@media (max-width: 480px) {
+  body.auth { align-items: flex-start; padding: .8rem; }
+  .login-card { margin-block: auto; }
+  .auth-brand { padding: 1.25rem 1.1rem 1rem; }
+  .auth-brand img { width: min(100%, 220px); margin-bottom: .8rem; }
+  .auth-content,
+  .login-card .card-body { padding: 1.15rem; }
+}
+
+@media (max-height: 620px) and (min-width: 481px) {
+  body.auth { align-items: flex-start; overflow-y: auto; }
+  .login-card { margin-block: 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}

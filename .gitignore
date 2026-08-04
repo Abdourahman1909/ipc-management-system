@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+backend/.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Runtime data — never commit real İPC records or uploaded documents
+data/
+uploads/
+backups/
+instance/
+.ipc-secret
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+backend/backups/
+backend/uploads/
+backend/instance/
+*.pdf.upload
+*.doc.upload
+*.docx.upload
+*.xlsx
+*.xlsm
+*.xls
+*.csv
+
+# Runtime output
+*.log
+*.pid
+
+# Generated delivery archives
+*.zip
+dist/
+build/
+*.spec
+
+# Editor and operating-system files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

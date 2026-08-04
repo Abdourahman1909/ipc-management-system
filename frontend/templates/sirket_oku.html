@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}İPC Kayıt Ayrıntısı{% endblock %}
+{% block content %}
+<nav aria-label="Sayfa yolu" class="page-breadcrumb">
+  <a href="{{ url_for('dashboard') }}">Ana Panel</a>
+  <i class="bi bi-chevron-right" aria-hidden="true"></i>
+  <a href="{{ url_for('sirketler') }}">İPC Kayıtları</a>
+  <i class="bi bi-chevron-right" aria-hidden="true"></i>
+  <span aria-current="page">Sıra No {{ company.sira_no }}</span>
+</nav>
+
+<header class="record-header">
+  <div class="record-title">
+    <div class="record-title-line">
+      <h1>{{ company.data.get('cezanin_muhatabi') or 'Kişi/firma adı girilmemiş' }}</h1>
+      <span class="record-status status-{{ company.status.tone }}">{{ company.status.label }}</span>
+    </div>
+    <p>
+      {% if company.data.get('tablet_tutanak_no') %}
+        Tablet Tutanak No: <strong>{{ company.data.get('tablet_tutanak_no') }}</strong>
+      {% else %}
+        Tablet tutanak numarası bulunmuyor
+      {% endif %}
+      <span aria-hidden="true"> · </span>Sıra No {{ company.sira_no }}
+    </p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-outline-secondary" href="{{ url_for('sirketler') }}">
+      <i class="bi bi-arrow-left me-2"></i>Kayıt listesine dön
+    </a>
+    <a class="btn btn-bordo" href="{{ url_for('sirket_duzenle', sira_no=company.sira_no) }}">
+      <i class="bi bi-pencil-square me-2"></i>
+      {{ 'Kaydı düzenle' if session.role == 'admin' else 'Düzenleme talebi oluştur' }}
+    </a>
+  </div>
+</header>
+
+<section class="record-summary" aria-label="Kayıt özeti">
+  <div>
+    <span>Ceza tutarı</span>
+    <strong>{{ company.data.get('ceza_tutari')|money_tr }}</strong>
+  </div>
+  <div>
+    <span>Yıl</span>
+    <strong>{{ company.data.get('yil') or '—' }}</strong>
+  </div>
+  <div>
+    <span>Tebliğ tarihi</span>
+    <strong>{{ company.data.get('teblig_tarihi') or '—' }}</strong>
+  </div>
+  <div>
+    <span>Kalan süre</span>
+    <strong>
+      {% if company.kalan is none %}Takip kapalı
+      {% elif company.kalan < 0 %}{{ -company.kalan }} gün geçti
+      {% else %}{{ company.kalan }} gün{% endif %}
+    </strong>
+  </div>
+</section>
+
+<div class="record-layout">
+  <div class="record-main">
+    {% for section in sections %}
+    <section class="record-section" aria-labelledby="section-{{ loop.index }}">
+      <header>
+        <div>
+          <h2 id="section-{{ loop.index }}">{{ section.title }}</h2>
+          <p>{{ section.description }}</p>
+        </div>
+      </header>
+      <dl class="record-fields">
+        {% for field in section.fields %}
+        {% set value = company.data.get(field.field_key) %}
+        <div>
+          <dt>{{ field.label }}</dt>
+          <dd>
+            {% if field.field_key == 'kalan_sure' %}
+              {% if company.kalan is none %}<span class="empty-value">Takip kapalı</span>
+              {% elif company.kalan < 0 %}<span class="record-status status-danger">{{ -company.kalan }} gün önce doldu</span>
+              {% elif company.kalan <= 3 %}<span class="record-status status-warning">{{ company.kalan }} gün kaldı</span>
+              {% else %}{{ company.kalan }} gün{% endif %}
+            {% elif field.datatype in ['DECIMAL', 'FLOAT / DOUBLE'] %}
+              {{ value|money_tr }}
+            {% elif value not in [none, ''] %}
+              {{ value }}
+            {% else %}
+              <span class="empty-value">Bilgi girilmemiş</span>
+            {% endif %}
+          </dd>
+        </div>
+        {% endfor %}
+      </dl>
+    </section>
+    {% endfor %}
+  </div>
+
+  <aside class="record-aside" aria-label="Ek bilgiler ve işlemler">
+    <section class="attachment-panel">
+      <div class="aside-heading">
+        <div>
+          <h2>Ek dosyalar</h2>
+          <p>{{ company.attachments|length }} dosya</p>
+        </div>
+        <i class="bi bi-paperclip" aria-hidden="true"></i>
+      </div>
+      {% if company.attachments %}
+      <ul class="attachment-list">
+        {% for attachment in company.attachments %}
+        <li>
+          <div class="attachment-name">
+            <i class="bi bi-file-earmark" aria-hidden="true"></i>
+            <div>
+              <strong>{{ attachment.original_name }}</strong>
+              <span>{{ attachment.file_size|filesize }}</span>
+            </div>
+          </div>
+          <div class="attachment-actions">
+            {% if attachment.can_preview %}
+            <a href="{{ url_for('attachment_file', attachment_id=attachment.id, goruntule=1) }}"
+               target="_blank" rel="noopener">Görüntüle</a>
+            {% endif %}
+            <a href="{{ url_for('attachment_file', attachment_id=attachment.id) }}">İndir</a>
+            {% if session.role == 'admin' %}
+            <form method="post" action="{{ url_for('attachment_delete', attachment_id=attachment.id) }}"
+                  class="attachment-delete-form" data-filename="{{ attachment.original_name }}">
+              <button type="submit" aria-label="{{ attachment.original_name }} dosyasını sil">Sil</button>
+            </form>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="aside-empty">
+        <i class="bi bi-file-earmark-plus" aria-hidden="true"></i>
+        <p>Bu kayda eklenmiş belge, fotoğraf veya video bulunmuyor.</p>
+        <a href="{{ url_for('sirket_duzenle', sira_no=company.sira_no) }}">Ek dosya ekle</a>
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="record-meta">
+      <h2>Kayıt geçmişi</h2>
+      <dl>
+        <div><dt>Kayıt tarihi</dt><dd>{{ company.created_at or '—' }}</dd></div>
+        <div><dt>Son güncelleme</dt><dd>{{ company.updated_at or 'Henüz güncellenmedi' }}</dd></div>
+      </dl>
+    </section>
+
+    <section class="danger-zone">
+      <h2>Kaydı sil</h2>
+      <p>
+        {% if session.role == 'admin' %}
+          Kayıt ve bağlı ek dosyalar kalıcı olarak silinir.
+        {% else %}
+          Silme işlemi uygulanmadan önce yönetici onayına gönderilir.
+        {% endif %}
+      </p>
+      <button class="btn btn-outline-danger w-100" type="button"
+              data-bs-toggle="modal" data-bs-target="#deleteRecordModal">
+        <i class="bi bi-trash me-2"></i>
+        {{ 'Kaydı sil' if session.role == 'admin' else 'Silme talebi oluştur' }}
+      </button>
+    </section>
+  </aside>
+</div>
+
+<div class="modal fade" id="deleteRecordModal" tabindex="-1"
+     aria-labelledby="deleteRecordTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title fs-5" id="deleteRecordTitle">
+            {{ 'İPC kaydını sil' if session.role == 'admin' else 'Silme talebi oluştur' }}
+          </h2>
+          <p class="mb-0 text-secondary small">Sıra No {{ company.sira_no }}</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Pencereyi kapat"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2"><strong>{{ company.data.get('cezanin_muhatabi') or 'Kişi/firma adı girilmemiş' }}</strong></p>
+        <p class="text-secondary">
+          {% if company.data.get('tablet_tutanak_no') %}
+            Tablet Tutanak No: {{ company.data.get('tablet_tutanak_no') }}.
+          {% endif %}
+          {% if session.role == 'admin' %}
+            Bu işlem geri alınamaz ve {{ company.attachments|length }} ek dosyayı da siler.
+          {% else %}
+            Talebiniz yöneticiye gönderilecek; kayıt onay verilene kadar korunacaktır.
+          {% endif %}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Kaydı koru</button>
+        <form method="post" action="{{ url_for('sirket_sil') }}">
+          <input type="hidden" name="sira_no" value="{{ company.sira_no }}">
+          <button type="submit" class="btn btn-danger">
+            {{ 'Kaydı kalıcı olarak sil' if session.role == 'admin' else 'Silme talebini gönder' }}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll(".attachment-delete-form").forEach((form) => {
+  form.addEventListener("submit", (event) => {
+    if (!window.confirm(`“${form.dataset.filename}” dosyası kalıcı olarak silinsin mi?`)) {
+      event.preventDefault();
+    }
+  });
+});
+</script>
+{% endblock %}

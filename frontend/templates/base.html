@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{% block title %}İPC Yönetim Sistemi{% endblock %} | Kocaeli İl Müdürlüğü</title>
+{% include "_favicon.html" %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Ana içeriğe geç</a>
+
+<!-- ========== Üst çubuk: Mobil kimlik | Kullanıcı | Bildirimler | Profil | Çıkış ========== -->
+<nav class="navbar navbar-ipc navbar-expand px-3 sticky-top">
+  <button class="nav-icon sidebar-toggle d-lg-none me-2" type="button"
+          data-bs-toggle="collapse" data-bs-target="#ipcSidebar"
+          aria-controls="ipcSidebar" aria-expanded="false" aria-label="Menüyü aç veya kapat">
+    <i class="bi bi-list"></i>
+  </button>
+  <a class="navbar-brand d-flex d-lg-none align-items-center" href="{{ url_for('dashboard') }}">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" class="logo-img"
+         alt="T.C. Sanayi ve Teknoloji Bakanlığı">
+  </a>
+  <div class="ms-auto d-flex align-items-center gap-1">
+    <span class="d-none d-md-flex align-items-center me-2 text-secondary">
+      <i class="bi bi-person-circle me-2 fs-5" style="color:var(--bordo)"></i>
+      <span>
+        <strong>{{ session.user_name }}</strong><br>
+        <small class="badge {{ 'bg-danger' if session.role=='admin' else 'bg-secondary' }}">
+          {{ 'Yönetici' if session.role=='admin' else 'Personel' }}</small>
+      </span>
+    </span>
+    <a href="{{ url_for('bildirimler') }}" class="nav-icon position-relative"
+       title="Bildirimler" aria-label="Bildirimler">
+      <i class="bi bi-bell"></i>
+      {% if unread_count %}<span class="badge rounded-pill bg-danger rozet">{{ unread_count }}</span>{% endif %}
+    </a>
+    <a href="{{ url_for('profil') }}" class="nav-icon" title="Profilim"
+       aria-label="Profilim"><i class="bi bi-person-gear"></i></a>
+    <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-danger ms-2">
+      <i class="bi bi-box-arrow-right me-1"></i>Çıkış</a>
+  </div>
+</nav>
+
+<div class="layout">
+  <!-- ========== Birleştirilmiş görev odaklı sol menü ========== -->
+  <aside class="sidebar collapse d-lg-block" id="ipcSidebar" aria-label="Ana menü">
+    <a class="sidebar-brand" href="{{ url_for('dashboard') }}"
+      aria-label="İdari Para Cezaları Yönetim Sistemi ana paneli">
+      <span class="sidebar-emblem" aria-hidden="true">
+        <img src="{{ url_for('static', filename='img/ministry-emblem.png') }}" alt="">
+      </span>
+      <span class="sidebar-ministry">T.C. Sanayi ve Teknoloji Bakanlığı</span>
+      <strong>İdari Para Cezaları<br>Yönetim Sistemi</strong>
+      <small>Kocaeli İl Müdürlüğü</small>
+    </a>
+    {% set menu = [] %}
+    {% set _ = menu.append(('dashboard',         'bi-house-door',            'Ana Panel', ['dashboard'])) %}
+    {% if session.role == 'admin' %}
+      {% set _ = menu.append(('personel',        'bi-people',                'Personel Yönetimi', ['personel'])) %}
+      {% set _ = menu.append(('form_duzenle',    'bi-ui-checks',             'Form Ayarları', ['form_duzenle'])) %}
+      {% set _ = menu.append(('veri_aktar',      'bi-database-up',           'Excel Verisini Aktar', ['veri_aktar', 'veri_aktar_onayla'])) %}
+    {% endif %}
+    {% set _ = menu.append(('sirket_ekle',       'bi-plus-square',           'Yeni İPC Kaydı', ['sirket_ekle'])) %}
+    {% set _ = menu.append(('sirketler',         'bi-journal-text',          'İPC Kayıtları', ['sirketler', 'sirket_oku', 'sirket_duzenle', 'sirket_sil', 'attachment_delete'])) %}
+    {% if session.role == 'admin' %}
+      {% set _ = menu.append(('onaylar',         'bi-clipboard-check',       'Onay Talepleri', ['onaylar', 'onay_karar'])) %}
+    {% endif %}
+    {% set _ = menu.append(('rapor',             'bi-bar-chart-line',        'Raporlar', ['rapor'])) %}
+    {% for ep, icon, text, active_endpoints in menu %}
+    {% set is_active = request.endpoint in active_endpoints %}
+    <a href="{{ url_for(ep) }}" class="{{ 'active' if is_active }}"
+       {% if is_active %}aria-current="page"{% endif %}>
+      <i class="bi {{ icon }}"></i><span>{{ text }}</span>
+      {% if ep == 'onaylar' and pending_count %}<span class="sidebar-count">{{ pending_count }}</span>{% endif %}
+    </a>
+    {% endfor %}
+    <hr>
+    <a href="{{ url_for('bildirimler') }}" class="{{ 'active' if request.endpoint == 'bildirimler' }}">
+      <i class="bi bi-bell"></i><span>Bildirimler</span>
+      {% if unread_count %}<span class="sidebar-count">{{ unread_count }}</span>{% endif %}
+    </a>
+    <a href="{{ url_for('sifre_degistir') }}" class="{{ 'active' if request.endpoint == 'sifre_degistir' }}">
+      <i class="bi bi-key"></i><span>Şifre Değiştir</span>
+    </a>
+  </aside>
+
+  <!-- ========== İçerik ========== -->
+  <main class="icerik" id="main-content" tabindex="-1">
+    {% block content %}{% endblock %}
+    <footer class="text-center mt-5 pt-3 border-top">
+      T.C. Sanayi ve Teknoloji Bakanlığı – Kocaeli İl Müdürlüğü •
+      İdari Para Cezaları Yönetim Sistemi © 2026
+    </footer>
+  </main>
+</div>
+
+<!-- ========== Toast bildirimleri ========== -->
+<div class="toast-alan position-fixed top-0 end-0 p-3" style="margin-top:75px">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="toast align-items-center border-0 text-bg-{{ 'primary' if cat=='info' else cat }}"
+         role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="bi bi-{{ 'check-circle' if cat=='success' else 'exclamation-triangle' if cat in ['warning','danger'] else 'info-circle' }} me-1"></i>
+          {{ msg }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+    {% endfor %}
+  {% endwith %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

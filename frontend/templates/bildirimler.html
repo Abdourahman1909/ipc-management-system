@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Bildirimler{% endblock %}
+{% block content %}
+<header class="notification-page-header">
+  <div>
+    <h1>Bildirimler</h1>
+    <p>Yalnızca dikkatinizi veya işleminizi gerektiren konular burada öne çıkar.</p>
+  </div>
+  {% if unread_count %}
+  <form method="post" action="{{ url_for('bildirim_tumunu_okundu') }}">
+    <button class="btn btn-outline-secondary" type="submit">
+      <i class="bi bi-check2-all me-2"></i>Tümünü okundu işaretle
+    </button>
+  </form>
+  {% endif %}
+</header>
+
+<section class="notification-section" aria-labelledby="action-notifications-title">
+  <div class="notification-section-heading">
+    <h2 id="action-notifications-title">İşlem gerekenler</h2>
+    {% if action_rows %}<span>{{ action_rows|length }}</span>{% endif %}
+  </div>
+
+  {% if action_rows %}
+  <div class="notification-list">
+    {% for n in action_rows %}
+    <article class="notification-row notification-{{ n.priority }} {{ 'is-unread' if not n.is_read }}">
+      <div class="notification-symbol" aria-hidden="true">
+        <i class="bi {{ 'bi-exclamation-triangle' if n.priority == 'critical' else 'bi-clipboard-check' if n.kind == 'approval' else 'bi-clock' }}"></i>
+      </div>
+      <div class="notification-copy">
+        <div class="notification-title-line">
+          <h3>{{ n.title or 'İşlem gerekiyor' }}</h3>
+          {% if not n.is_read %}<span class="notification-new">Yeni</span>{% endif %}
+        </div>
+        <p>{{ n.message }}</p>
+        <time datetime="{{ n.created_at }}">{{ n.created_at }}</time>
+      </div>
+      {% if n.action_url %}
+      <a class="btn btn-outline-bordo notification-action"
+         href="{{ url_for('bildirim_ac', nid=n.id) }}">
+        {{ 'İncele' if n.kind == 'approval' else 'Kayıtları aç' }}
+        <i class="bi bi-arrow-right ms-2"></i>
+      </a>
+      {% elif not n.is_read %}
+      <form method="post" action="{{ url_for('bildirim_okundu', nid=n.id) }}">
+        <button class="btn btn-link-clean notification-action" type="submit">Okundu</button>
+      </form>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="notification-clear-state">
+    <i class="bi bi-check-circle" aria-hidden="true"></i>
+    <div>
+      <strong>Şu anda işlem gerektiren bir konu yok.</strong>
+      <span>Yeni bir süre uyarısı veya onay talebi oluştuğunda burada görünecek.</span>
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<details class="notification-history">
+  <summary>
+    <span>
+      <i class="bi bi-clock-history me-2" aria-hidden="true"></i>
+      Son gelişmeler
+    </span>
+    <small>{{ recent_rows|length }} kayıt</small>
+  </summary>
+  {% if recent_rows %}
+  <div class="notification-list notification-list-history">
+    {% for n in recent_rows %}
+    <article class="notification-row {{ 'is-unread' if not n.is_read }}">
+      <div class="notification-symbol is-neutral" aria-hidden="true">
+        <i class="bi {{ 'bi-check2-circle' if n.kind == 'approval-result' else 'bi-info-circle' }}"></i>
+      </div>
+      <div class="notification-copy">
+        <div class="notification-title-line">
+          <h3>{{ n.title or 'Bilgilendirme' }}</h3>
+          {% if not n.is_read %}<span class="notification-new">Yeni</span>{% endif %}
+        </div>
+        <p>{{ n.message }}</p>
+        <time datetime="{{ n.created_at }}">{{ n.created_at }}</time>
+      </div>
+      {% if n.action_url %}
+      <a class="btn btn-outline-secondary notification-action"
+         href="{{ url_for('bildirim_ac', nid=n.id) }}">
+        Kaydı aç<i class="bi bi-arrow-right ms-2"></i>
+      </a>
+      {% elif not n.is_read %}
+      <form method="post" action="{{ url_for('bildirim_okundu', nid=n.id) }}">
+        <button class="btn btn-link-clean notification-action" type="submit">Okundu</button>
+      </form>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="notification-history-empty">Henüz bir gelişme bulunmuyor.</p>
+  {% endif %}
+</details>
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}Onay Talepleri{% endblock %}
+{% block content %}
+<header class="approval-page-header">
+  <div>
+    <h1>Onay Talepleri</h1>
+    <p>Personel tarafından gönderilen kayıt işlemlerini kontrol edin ve karara bağlayın.</p>
+  </div>
+  {% if pending_items %}
+  <div class="approval-pending-count" aria-label="{{ pending_items|length }} bekleyen talep">
+    <strong>{{ pending_items|length }}</strong>
+    <span>bekleyen talep</span>
+  </div>
+  {% endif %}
+</header>
+
+<section class="approval-section" aria-labelledby="pending-approvals-title">
+  <h2 id="pending-approvals-title">Karar bekleyenler</h2>
+
+  {% if pending_items %}
+  <div class="approval-list">
+    {% for p in pending_items %}
+    <article class="approval-request" id="talep-{{ p.id }}">
+      <div class="approval-request-head">
+        <div class="approval-request-icon approval-{{ p.action_type }}" aria-hidden="true">
+          <i class="bi {{ 'bi-plus-lg' if p.action_type == 'ekle' else 'bi-pencil' if p.action_type == 'duzenle' else 'bi-trash3' }}"></i>
+        </div>
+        <div class="approval-request-title">
+          <div>
+            <span class="approval-type">
+              {{ {'ekle':'Yeni kayıt','duzenle':'Kayıt düzenleme','sil':'Kayıt silme'}[p.action_type] }}
+            </span>
+            <h3>{{ p.company_name }}</h3>
+          </div>
+          <p>
+            <strong>{{ p.requester }}</strong>
+            {% if p.sira_no %}<span>· Sıra No {{ p.sira_no }}</span>{% endif %}
+            <span>· {{ p.created_at }}</span>
+          </p>
+        </div>
+      </div>
+
+      {% if p.action_type == 'duzenle' %}
+      <details class="approval-detail" {{ 'open' if p.changes|length <= 3 }}>
+        <summary>{{ p.changes|length }} değişikliği karşılaştır</summary>
+        {% if p.changes %}
+        <div class="approval-change-list">
+          {% for change in p.changes %}
+          <div class="approval-change">
+            <strong>{{ change.label }}</strong>
+            <div>
+              <span class="approval-old">{{ change.old }}</span>
+              <i class="bi bi-arrow-right" aria-hidden="true"></i>
+              <span class="approval-new">{{ change.new }}</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="approval-detail-empty">Kaydedilecek bir alan değişikliği bulunamadı.</p>
+        {% endif %}
+      </details>
+      {% elif p.action_type == 'ekle' and p.data %}
+      <details class="approval-detail">
+        <summary>Gönderilen kayıt bilgilerini görüntüle</summary>
+        <dl class="approval-data-list">
+          {% for f in fields if f.field_key in p.data and p.data[f.field_key] %}
+          <div><dt>{{ f.label }}</dt><dd>{{ p.data[f.field_key] }}</dd></div>
+          {% endfor %}
+        </dl>
+      </details>
+      {% else %}
+      <div class="approval-delete-warning">
+        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+        Onaylandığında bu kayıt ve bağlı ek dosyalar kalıcı olarak silinir.
+      </div>
+      {% endif %}
+
+      {% if p.attachments %}
+      <div class="approval-attachments">
+        <strong><i class="bi bi-paperclip me-1"></i>{{ p.attachments|length }} ek dosya</strong>
+        {% for attachment in p.attachments %}
+        <a href="{{ url_for('attachment_file', attachment_id=attachment.id, goruntule=1) }}"
+           target="_blank" rel="noopener">
+          {{ attachment.original_name }} <span>({{ attachment.file_size|filesize }})</span>
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="approval-actions">
+        <form method="post"
+              action="{{ url_for('onay_karar', pid=p.id, karar='onayla') }}"
+              {% if p.action_type == 'sil' %}
+              data-confirm="Bu kaydın ve bağlı dosyaların kalıcı olarak silinmesini onaylıyor musunuz?"
+              {% endif %}>
+          <button class="btn btn-success" type="submit">
+            <i class="bi bi-check-lg me-1"></i>Onayla
+          </button>
+        </form>
+        <details class="approval-reject">
+          <summary class="btn btn-outline-danger">
+            <i class="bi bi-x-lg me-1"></i>Reddet
+          </summary>
+          <form method="post" action="{{ url_for('onay_karar', pid=p.id, karar='reddet') }}">
+            <label for="reason-{{ p.id }}">Reddetme gerekçesi</label>
+            <textarea id="reason-{{ p.id }}" name="decision_reason" rows="2" required
+                      placeholder="Personelin neyi düzeltmesi gerektiğini kısaca yazın."></textarea>
+            <div>
+              <button class="btn btn-danger btn-sm" type="submit">Reddi kaydet</button>
+            </div>
+          </form>
+        </details>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="approval-clear-state">
+    <i class="bi bi-check-circle" aria-hidden="true"></i>
+    <div>
+      <strong>Karar bekleyen talep yok.</strong>
+      <span>Yeni bir personel talebi geldiğinde burada görünecek.</span>
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<details class="approval-history">
+  <summary>
+    <span><i class="bi bi-clock-history me-2"></i>Geçmiş kararlar</span>
+    <small>{{ history_items|length }} kayıt</small>
+  </summary>
+  {% if history_items %}
+  <div class="approval-history-list">
+    {% for p in history_items %}
+    <div class="approval-history-row">
+      <div>
+        <strong>{{ p.company_name }}</strong>
+        <span>
+          {{ {'ekle':'Yeni kayıt','duzenle':'Düzenleme','sil':'Silme'}[p.action_type] }}
+          · {{ p.requester }}
+          {% if p.sira_no %}· Sıra No {{ p.sira_no }}{% endif %}
+        </span>
+        {% if p.decision_reason %}
+        <p><strong>Gerekçe:</strong> {{ p.decision_reason }}</p>
+        {% endif %}
+      </div>
+      <span class="approval-decision approval-decision-{{ p.status }}">
+        {{ 'Onaylandı' if p.status == 'onaylandi' else 'Reddedildi' }}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="approval-history-empty">Henüz sonuçlandırılmış bir talep bulunmuyor.</p>
+  {% endif %}
+</details>
+{% endblock %}

@@ -1,0 +1,208 @@
+digraph IPC_ER {
+  graph [
+    rankdir=TB,
+    newrank=true,
+    bgcolor="#F4F5F7",
+    pad="0.35",
+    nodesep="0.42",
+    ranksep="0.72",
+    splines=ortho,
+    fontname="DejaVu Sans",
+    fontsize=18,
+    fontcolor="#20242A",
+    labelloc="t",
+    label=<
+      <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+        <TR><TD><FONT POINT-SIZE="22"><B>İPC Yönetim Sistemi — ER Diyagramı</B></FONT></TD></TR>
+        <TR><TD><FONT POINT-SIZE="11" COLOR="#5F6873">SQLite veri modeli • 29.07.2026</FONT></TD></TR>
+      </TABLE>
+    >
+  ];
+
+  node [
+    shape=plain,
+    fontname="DejaVu Sans",
+    fontsize=10
+  ];
+
+  edge [
+    color="#7A8491",
+    fontcolor="#5F6873",
+    fontname="DejaVu Sans",
+    fontsize=9,
+    penwidth=1.35,
+    arrowsize=0.7,
+    style=dashed,
+    dir=both,
+    arrowtail=tee,
+    arrowhead=crow
+  ];
+
+    users [
+      label=<
+        <TABLE BORDER="0" CELLBORDER="1" COLOR="#D0D5DD" CELLSPACING="0" CELLPADDING="6" BGCOLOR="#FFFFFF">
+          <TR><TD COLSPAN="3" BGCOLOR="#5C0F1D"><FONT COLOR="#FFFFFF" POINT-SIZE="13"><B>users</B></FONT><BR/><FONT COLOR="#F2DDE2" POINT-SIZE="9">Kullanıcı hesapları</FONT></TD></TR>
+          <TR><TD BGCOLOR="#F2E8EA"><B>Anahtar</B></TD><TD BGCOLOR="#F2E8EA"><B>Alan</B></TD><TD BGCOLOR="#F2E8EA"><B>Tür</B></TD></TR>
+          <TR><TD><FONT COLOR="#8C1D2F"><B>PK</B></FONT></TD><TD PORT="id" ALIGN="LEFT"><B>id</B></TD><TD ALIGN="LEFT">INTEGER</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">name</TD><TD ALIGN="LEFT">TEXT NOT NULL</TD></TR>
+          <TR><TD><FONT COLOR="#276749"><B>UQ</B></FONT></TD><TD ALIGN="LEFT">email</TD><TD ALIGN="LEFT">TEXT NOT NULL</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">password_hash</TD><TD ALIGN="LEFT">TEXT NOT NULL</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">role</TD><TD ALIGN="LEFT">TEXT NOT NULL</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">created_at</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+        </TABLE>
+      >
+    ];
+
+    companies [
+      label=<
+        <TABLE BORDER="0" CELLBORDER="1" COLOR="#D0D5DD" CELLSPACING="0" CELLPADDING="6" BGCOLOR="#FFFFFF">
+          <TR><TD COLSPAN="3" BGCOLOR="#8C1D2F"><FONT COLOR="#FFFFFF" POINT-SIZE="13"><B>companies</B></FONT><BR/><FONT COLOR="#FBE8EC" POINT-SIZE="9">İPC kayıtları</FONT></TD></TR>
+          <TR><TD BGCOLOR="#F2E8EA"><B>Anahtar</B></TD><TD BGCOLOR="#F2E8EA"><B>Alan</B></TD><TD BGCOLOR="#F2E8EA"><B>Tür</B></TD></TR>
+          <TR><TD><FONT COLOR="#8C1D2F"><B>PK</B></FONT></TD><TD PORT="sira_no" ALIGN="LEFT"><B>sira_no</B></TD><TD ALIGN="LEFT">INTEGER</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">data</TD><TD ALIGN="LEFT">TEXT / JSON NOT NULL</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">created_by</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">created_at</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">updated_at</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">source_file_hash</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">source_row</TD><TD ALIGN="LEFT">INTEGER</TD></TR>
+          <TR><TD COLSPAN="3" BGCOLOR="#FFF8E6" ALIGN="LEFT"><FONT COLOR="#705300" POINT-SIZE="9">data: 28 Excel alanı + ölçü aleti kalemleri</FONT></TD></TR>
+        </TABLE>
+      >
+    ];
+
+    pending_actions [
+      label=<
+        <TABLE BORDER="0" CELLBORDER="1" COLOR="#D0D5DD" CELLSPACING="0" CELLPADDING="6" BGCOLOR="#FFFFFF">
+          <TR><TD COLSPAN="3" BGCOLOR="#B8860B"><FONT COLOR="#FFFFFF" POINT-SIZE="13"><B>pending_actions</B></FONT><BR/><FONT COLOR="#FFF4D1" POINT-SIZE="9">Personel onay talepleri</FONT></TD></TR>
+          <TR><TD BGCOLOR="#FFF4D1"><B>Anahtar</B></TD><TD BGCOLOR="#FFF4D1"><B>Alan</B></TD><TD BGCOLOR="#FFF4D1"><B>Tür</B></TD></TR>
+          <TR><TD><FONT COLOR="#8C1D2F"><B>PK</B></FONT></TD><TD PORT="id" ALIGN="LEFT"><B>id</B></TD><TD ALIGN="LEFT">INTEGER</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">action_type</TD><TD ALIGN="LEFT">TEXT NOT NULL</TD></TR>
+          <TR><TD><FONT COLOR="#B54708"><B>REF</B></FONT></TD><TD PORT="sira_no" ALIGN="LEFT">sira_no</TD><TD ALIGN="LEFT">INTEGER</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">data</TD><TD ALIGN="LEFT">TEXT / JSON</TD></TR>
+          <TR><TD><FONT COLOR="#B54708"><B>REF</B></FONT></TD><TD PORT="requested_by" ALIGN="LEFT">requested_by</TD><TD ALIGN="LEFT">INTEGER NOT NULL</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">status</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">created_at</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">decided_at</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">decision_reason</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+        </TABLE>
+      >
+    ];
+
+    notifications [
+      label=<
+        <TABLE BORDER="0" CELLBORDER="1" COLOR="#D0D5DD" CELLSPACING="0" CELLPADDING="6" BGCOLOR="#FFFFFF">
+          <TR><TD COLSPAN="3" BGCOLOR="#B8860B"><FONT COLOR="#FFFFFF" POINT-SIZE="13"><B>notifications</B></FONT><BR/><FONT COLOR="#FFF4D1" POINT-SIZE="9">Kullanıcı bildirimleri</FONT></TD></TR>
+          <TR><TD BGCOLOR="#FFF4D1"><B>Anahtar</B></TD><TD BGCOLOR="#FFF4D1"><B>Alan</B></TD><TD BGCOLOR="#FFF4D1"><B>Tür</B></TD></TR>
+          <TR><TD><FONT COLOR="#8C1D2F"><B>PK</B></FONT></TD><TD ALIGN="LEFT"><B>id</B></TD><TD ALIGN="LEFT">INTEGER</TD></TR>
+          <TR><TD><FONT COLOR="#B54708"><B>REF</B></FONT></TD><TD PORT="user_id" ALIGN="LEFT">user_id</TD><TD ALIGN="LEFT">INTEGER NOT NULL</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">title</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">message</TD><TD ALIGN="LEFT">TEXT NOT NULL</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">kind / priority</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">action_url</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD><FONT COLOR="#276749"><B>UQ*</B></FONT></TD><TD ALIGN="LEFT">dedupe_key</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">metadata</TD><TD ALIGN="LEFT">TEXT / JSON</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">is_read / resolved_at</TD><TD ALIGN="LEFT">INTEGER / TEXT</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">created_at</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+        </TABLE>
+      >
+    ];
+
+    attachments [
+      label=<
+        <TABLE BORDER="0" CELLBORDER="1" COLOR="#D0D5DD" CELLSPACING="0" CELLPADDING="6" BGCOLOR="#FFFFFF">
+          <TR><TD COLSPAN="3" BGCOLOR="#34506D"><FONT COLOR="#FFFFFF" POINT-SIZE="13"><B>attachments</B></FONT><BR/><FONT COLOR="#E6EFF8" POINT-SIZE="9">Belge, fotoğraf ve videolar</FONT></TD></TR>
+          <TR><TD BGCOLOR="#EAF0F6"><B>Anahtar</B></TD><TD BGCOLOR="#EAF0F6"><B>Alan</B></TD><TD BGCOLOR="#EAF0F6"><B>Tür</B></TD></TR>
+          <TR><TD><FONT COLOR="#8C1D2F"><B>PK</B></FONT></TD><TD ALIGN="LEFT"><B>id</B></TD><TD ALIGN="LEFT">INTEGER</TD></TR>
+          <TR><TD><FONT COLOR="#B54708"><B>REF</B></FONT></TD><TD PORT="company_sira_no" ALIGN="LEFT">company_sira_no</TD><TD ALIGN="LEFT">INTEGER</TD></TR>
+          <TR><TD><FONT COLOR="#B54708"><B>REF</B></FONT></TD><TD PORT="pending_action_id" ALIGN="LEFT">pending_action_id</TD><TD ALIGN="LEFT">INTEGER</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">original_name</TD><TD ALIGN="LEFT">TEXT NOT NULL</TD></TR>
+          <TR><TD><FONT COLOR="#276749"><B>UQ</B></FONT></TD><TD ALIGN="LEFT">stored_name</TD><TD ALIGN="LEFT">TEXT NOT NULL</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">mime_type</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">file_size</TD><TD ALIGN="LEFT">INTEGER NOT NULL</TD></TR>
+          <TR><TD><FONT COLOR="#B54708"><B>REF</B></FONT></TD><TD PORT="uploaded_by" ALIGN="LEFT">uploaded_by</TD><TD ALIGN="LEFT">INTEGER</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">created_at</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD COLSPAN="3" BGCOLOR="#EEF7F2" ALIGN="LEFT"><FONT COLOR="#175F37" POINT-SIZE="9">Kayıt veya bekleyen talep bağlantısı zorunlu</FONT></TD></TR>
+        </TABLE>
+      >
+    ];
+
+    import_history [
+      label=<
+        <TABLE BORDER="0" CELLBORDER="1" COLOR="#D0D5DD" CELLSPACING="0" CELLPADDING="6" BGCOLOR="#FFFFFF">
+          <TR><TD COLSPAN="3" BGCOLOR="#34506D"><FONT COLOR="#FFFFFF" POINT-SIZE="13"><B>import_history</B></FONT><BR/><FONT COLOR="#E6EFF8" POINT-SIZE="9">Excel aktarım denetim izi</FONT></TD></TR>
+          <TR><TD BGCOLOR="#EAF0F6"><B>Anahtar</B></TD><TD BGCOLOR="#EAF0F6"><B>Alan</B></TD><TD BGCOLOR="#EAF0F6"><B>Tür</B></TD></TR>
+          <TR><TD><FONT COLOR="#8C1D2F"><B>PK</B></FONT></TD><TD ALIGN="LEFT"><B>id</B></TD><TD ALIGN="LEFT">INTEGER</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">filename / file_sha256</TD><TD ALIGN="LEFT">TEXT NOT NULL</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">sheet_name</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">source_rows</TD><TD ALIGN="LEFT">INTEGER NOT NULL</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">inserted / updated / skipped</TD><TD ALIGN="LEFT">INTEGER NOT NULL</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">warning_count</TD><TD ALIGN="LEFT">INTEGER NOT NULL</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">conflict_mode</TD><TD ALIGN="LEFT">TEXT NOT NULL</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">backup_path</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD><FONT COLOR="#B54708"><B>REF</B></FONT></TD><TD PORT="imported_by" ALIGN="LEFT">imported_by</TD><TD ALIGN="LEFT">INTEGER</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">imported_at</TD><TD ALIGN="LEFT">TEXT</TD></TR>
+        </TABLE>
+      >
+    ];
+
+    form_fields [
+      label=<
+        <TABLE BORDER="0" CELLBORDER="1" COLOR="#D0D5DD" CELLSPACING="0" CELLPADDING="6" BGCOLOR="#FFFFFF">
+          <TR><TD COLSPAN="3" BGCOLOR="#5F6873"><FONT COLOR="#FFFFFF" POINT-SIZE="13"><B>form_fields</B></FONT><BR/><FONT COLOR="#EDF0F3" POINT-SIZE="9">Dinamik form şeması</FONT></TD></TR>
+          <TR><TD BGCOLOR="#EDF0F3"><B>Anahtar</B></TD><TD BGCOLOR="#EDF0F3"><B>Alan</B></TD><TD BGCOLOR="#EDF0F3"><B>Tür</B></TD></TR>
+          <TR><TD><FONT COLOR="#8C1D2F"><B>PK</B></FONT></TD><TD ALIGN="LEFT"><B>id</B></TD><TD ALIGN="LEFT">INTEGER</TD></TR>
+          <TR><TD><FONT COLOR="#276749"><B>UQ</B></FONT></TD><TD ALIGN="LEFT">field_key</TD><TD ALIGN="LEFT">TEXT NOT NULL</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">label / datatype</TD><TD ALIGN="LEFT">TEXT NOT NULL</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">required</TD><TD ALIGN="LEFT">INTEGER</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">options</TD><TD ALIGN="LEFT">TEXT / JSON</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">is_system / position</TD><TD ALIGN="LEFT">INTEGER</TD></TR>
+        </TABLE>
+      >
+    ];
+
+    app_meta [
+      label=<
+        <TABLE BORDER="0" CELLBORDER="1" COLOR="#D0D5DD" CELLSPACING="0" CELLPADDING="6" BGCOLOR="#FFFFFF">
+          <TR><TD COLSPAN="3" BGCOLOR="#5F6873"><FONT COLOR="#FFFFFF" POINT-SIZE="13"><B>app_meta</B></FONT><BR/><FONT COLOR="#EDF0F3" POINT-SIZE="9">Şema ve uygulama meta verisi</FONT></TD></TR>
+          <TR><TD BGCOLOR="#EDF0F3"><B>Anahtar</B></TD><TD BGCOLOR="#EDF0F3"><B>Alan</B></TD><TD BGCOLOR="#EDF0F3"><B>Tür</B></TD></TR>
+          <TR><TD><FONT COLOR="#8C1D2F"><B>PK</B></FONT></TD><TD ALIGN="LEFT"><B>key</B></TD><TD ALIGN="LEFT">TEXT</TD></TR>
+          <TR><TD></TD><TD ALIGN="LEFT">value</TD><TD ALIGN="LEFT">TEXT NOT NULL</TD></TR>
+        </TABLE>
+      >
+    ];
+
+  { rank=same; users; companies; }
+  { rank=same; notifications; pending_actions; attachments; import_history; }
+  { rank=same; form_fields; app_meta; }
+
+  users:s -> pending_actions:n;
+  users:s -> notifications:n;
+  users:s -> attachments:n;
+  users:s -> import_history:n;
+  companies:s -> pending_actions:n;
+  companies:s -> attachments:n;
+  pending_actions:e -> attachments:w [constraint=false];
+
+  users -> companies [style=invis, weight=100];
+  notifications -> pending_actions [style=invis, weight=100];
+  pending_actions -> attachments [style=invis, weight=100];
+  attachments -> import_history [style=invis, weight=100];
+  form_fields -> app_meta [style=invis, weight=100];
+  notifications -> form_fields [style=invis, weight=25];
+  import_history -> app_meta [style=invis, weight=25];
+
+  legend [
+    label=<
+      <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="#FFFFFF">
+        <TR><TD ALIGN="LEFT"><FONT COLOR="#8C1D2F"><B>PK</B></FONT> Birincil anahtar</TD><TD ALIGN="LEFT"><FONT COLOR="#276749"><B>UQ</B></FONT> Benzersiz alan / indeks</TD><TD ALIGN="LEFT"><FONT COLOR="#B54708"><B>REF</B></FONT> Mantıksal referans</TD></TR>
+        <TR><TD COLSPAN="3" ALIGN="LEFT"><FONT COLOR="#7A8491"><B>1 - - - - N</B></FONT> <FONT COLOR="#5F6873">Kesik bağlantı: mantıksal bire-çok (1:N) ilişki</FONT></TD></TR>
+        <TR><TD COLSPAN="3" ALIGN="LEFT"><FONT COLOR="#5F6873">İlişkiler uygulama kodundan çıkarılmıştır. SQLite şemasında FOREIGN KEY kısıtları tanımlı değildir.</FONT></TD></TR>
+        <TR><TD COLSPAN="3" ALIGN="LEFT"><FONT COLOR="#5F6873">companies.created_by tarihsel bir metin denetim alanıdır; users.id alanına bağlı değildir.</FONT></TD></TR>
+      </TABLE>
+    >
+  ];
+
+  { rank=sink; legend; }
+  form_fields -> legend [style=invis, weight=25];
+  app_meta -> legend [style=invis, weight=25];
+}

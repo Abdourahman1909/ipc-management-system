@@ -1,0 +1,73 @@
+name: Build Windows server package
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/build-windows.yml"
+      - "backend/**"
+      - "frontend/**"
+      - "windows_server.py"
+      - "WINDOWS_KURULUM.md"
+      - "Windows_Guvenlik_Duvari_Ac.bat"
+      - "AUTHORS.md"
+      - "LICENSE"
+      - "THIRD_PARTY_NOTICES.md"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pyinstaller
+
+      - name: Build standalone executable
+        shell: pwsh
+        run: |
+          pyinstaller `
+            --noconfirm `
+            --clean `
+            --onefile `
+            --console `
+            --name IPC_Yonetim_Sistemi `
+            --paths backend `
+            --add-data "frontend;frontend" `
+            --add-data "backend/fonts;backend/fonts" `
+            windows_server.py
+
+      - name: Create Windows package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist/IPC_Yonetim_Sistemi_Windows
+          Copy-Item dist/IPC_Yonetim_Sistemi.exe dist/IPC_Yonetim_Sistemi_Windows/
+          Copy-Item WINDOWS_KURULUM.md dist/IPC_Yonetim_Sistemi_Windows/
+          Copy-Item Windows_Guvenlik_Duvari_Ac.bat dist/IPC_Yonetim_Sistemi_Windows/
+          Copy-Item AUTHORS.md dist/IPC_Yonetim_Sistemi_Windows/
+          Copy-Item LICENSE dist/IPC_Yonetim_Sistemi_Windows/
+          Copy-Item THIRD_PARTY_NOTICES.md dist/IPC_Yonetim_Sistemi_Windows/
+
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: IPC_Yonetim_Sistemi_Windows
+          path: dist/IPC_Yonetim_Sistemi_Windows/
+          if-no-files-found: error

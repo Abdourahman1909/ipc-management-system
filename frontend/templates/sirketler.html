@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}İPC Kayıtları{% endblock %}
+{% block content %}
+<nav aria-label="Sayfa yolu" class="page-breadcrumb">
+  <a href="{{ url_for('dashboard') }}">Ana Panel</a>
+  <i class="bi bi-chevron-right" aria-hidden="true"></i>
+  <span aria-current="page">İPC Kayıtları</span>
+</nav>
+
+<header class="page-heading">
+  <div>
+    <h1>İPC Kayıtları</h1>
+    <p>Kaydı tablet tutanak numarası veya kişi/firma adıyla bulun; ayrıntıları tek ekrandan yönetin.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-outline-bordo" href="{{ url_for('rapor',
+      q=request.args.get('q', ''),
+      yil=request.args.get('yil', ''),
+      durum=request.args.get('durum', ''),
+      hukuki_dayanak=request.args.get('hukuki_dayanak', '')) }}">
+      <i class="bi bi-file-earmark-bar-graph me-2"></i>Bu sonuçlardan rapor oluştur
+    </a>
+    <a class="btn btn-bordo" href="{{ url_for('sirket_ekle') }}">
+      <i class="bi bi-plus-lg me-2"></i>Yeni İPC Kaydı
+    </a>
+  </div>
+</header>
+
+<section class="registry-panel" aria-labelledby="records-search-title">
+  <h2 class="visually-hidden" id="records-search-title">Kayıtlarda ara ve filtrele</h2>
+  <form method="get" class="registry-search-form">
+    <div class="registry-search">
+      <label for="recordSearch">Kayıtlarda ara</label>
+      <div class="search-control">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input id="recordSearch" type="search" name="q"
+               value="{{ request.args.get('q', '') }}"
+               placeholder="Tablet Tutanak No veya Kişi/Firma Adı"
+               autocomplete="off">
+        <button class="btn btn-bordo" type="submit">Kayıtlarda ara</button>
+      </div>
+      <p class="field-help">Büyük/küçük harf ayrımı yapılmaz; tablet numarasının veya adın bir bölümünü yazabilirsiniz.</p>
+    </div>
+
+    <div class="status-tabs" aria-label="Kayıt durumu">
+      {% set status_tabs = [
+        ('', 'Tümü'),
+        ('sure-isliyor', 'Süresi işleyen'),
+        ('sure-doldu', 'Süresi dolan'),
+        ('odendi', 'Ödenen')
+      ] %}
+      {% for value, label in status_tabs %}
+      <a href="{{ url_for('sirketler',
+                  q=request.args.get('q', ''),
+                  yil=request.args.get('yil', ''),
+                  hukuki_dayanak=request.args.get('hukuki_dayanak', ''),
+                  sayfa_boyutu=per_page,
+                  durum=value) }}"
+         class="status-tab {{ 'active' if request.args.get('durum', '') == value }}"
+         {% if request.args.get('durum', '') == value %}aria-current="page"{% endif %}>
+        <span>{{ label }}</span>
+        <strong>{{ status_counts[value] }}</strong>
+      </a>
+      {% endfor %}
+    </div>
+
+    <div class="registry-filters">
+      <div>
+        <label for="yearFilter">Yıl</label>
+        <select id="yearFilter" name="yil" class="form-select">
+          <option value="">Tüm yıllar</option>
+          {% for year in years %}
+          <option value="{{ year }}" {{ "selected" if request.args.get('yil') == year }}>{{ year }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="basisFilter">Hukuki dayanak</label>
+        <select id="basisFilter" name="hukuki_dayanak" class="form-select">
+          <option value="">Tüm hukuki dayanaklar</option>
+          {% for basis in legal_bases %}
+          <option value="{{ basis }}" {{ "selected" if request.args.get('hukuki_dayanak') == basis }}>{{ basis }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="pageSize">Sayfa başına</label>
+        <select id="pageSize" name="sayfa_boyutu" class="form-select">
+          {% for size in [25, 50, 100] %}
+          <option value="{{ size }}" {{ "selected" if per_page == size }}>{{ size }} kayıt</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-outline-secondary" type="submit">
+          <i class="bi bi-funnel me-2"></i>Filtreleri uygula
+        </button>
+        {% if request.args %}
+        <a class="btn btn-link-clean" href="{{ url_for('sirketler') }}">Filtreleri temizle</a>
+        {% endif %}
+      </div>
+    </div>
+  </form>
+</section>
+
+<section class="registry-results" aria-labelledby="records-title">
+  <div class="results-toolbar">
+    <div>
+      <h2 id="records-title">Kayıt listesi</h2>
+      <p>
+        {% if pagination.total %}
+          {{ pagination.total }} eşleşen kayıttan {{ pagination.start }}–{{ pagination.end }} arası gösteriliyor.
+        {% else %}
+          Arama ölçütlerine uyan kayıt bulunamadı.
+        {% endif %}
+      </p>
+    </div>
+    {% if pagination.total %}
+    <a class="btn btn-outline-secondary" href="{{ url_for('disa_aktar', fmt='excel') }}?{{ request.query_string.decode() }}">
+      <i class="bi bi-file-earmark-excel me-2"></i>Listeyi Excel'e aktar
+    </a>
+    {% endif %}
+  </div>
+
+  {% if companies %}
+  <div class="registry-table-wrap">
+    <table class="registry-table">
+      <thead>
+        <tr>
+          <th scope="col">Kişi / Firma ve Tablet Tutanağı</th>
+          <th scope="col">Yıl</th>
+          <th scope="col">Hukuki Dayanak</th>
+          <th scope="col" class="text-end">Ceza Tutarı</th>
+          <th scope="col">Tebliğ Tarihi</th>
+          <th scope="col">Durum</th>
+          <th scope="col" class="text-end">İşlemler</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for company in companies %}
+        <tr>
+          <td data-label="Kayıt">
+            <a class="record-identity" href="{{ url_for('sirket_oku', sira_no=company.sira_no) }}">
+              <strong>{{ company.data.get('cezanin_muhatabi') or 'Kişi/firma adı girilmemiş' }}</strong>
+              <span>
+                {% if company.data.get('tablet_tutanak_no') %}
+                  Tablet Tutanak No: {{ company.data.get('tablet_tutanak_no') }}
+                {% else %}
+                  Tablet tutanağı bulunmuyor
+                {% endif %}
+                <span aria-hidden="true"> · </span>Sıra No {{ company.sira_no }}
+              </span>
+            </a>
+          </td>
+          <td data-label="Yıl" class="numeric-cell">{{ company.data.get('yil') or '—' }}</td>
+          <td data-label="Hukuki Dayanak">{{ company.data.get('hukuki_dayanak') or '—' }}</td>
+          <td data-label="Ceza Tutarı" class="text-end numeric-cell">{{ company.data.get('ceza_tutari')|money_tr }}</td>
+          <td data-label="Tebliğ Tarihi" class="numeric-cell">{{ company.data.get('teblig_tarihi') or '—' }}</td>
+          <td data-label="Durum">
+            <span class="record-status status-{{ company.status.tone }}">{{ company.status.label }}</span>
+          </td>
+          <td data-label="İşlemler">
+            <div class="row-actions">
+              <a class="btn btn-sm btn-outline-bordo" href="{{ url_for('sirket_oku', sira_no=company.sira_no) }}">
+                Kaydı aç
+              </a>
+              <a class="btn btn-sm btn-quiet" href="{{ url_for('sirket_duzenle', sira_no=company.sira_no) }}">
+                <i class="bi bi-pencil me-1"></i>Düzenle
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if pagination.page_count > 1 %}
+  <nav class="pagination-bar" aria-label="Kayıt sayfaları">
+    <span>Sayfa {{ pagination.page }} / {{ pagination.page_count }}</span>
+    <div class="pagination-links">
+      {% if pagination.previous_url %}
+      <a href="{{ pagination.previous_url }}" aria-label="Önceki sayfa"><i class="bi bi-chevron-left"></i></a>
+      {% endif %}
+      {% set previous_number = namespace(value=0) %}
+      {% for item in pagination.numbers %}
+        {% if previous_number.value and item.number - previous_number.value > 1 %}
+        <span class="pagination-ellipsis" aria-hidden="true">…</span>
+        {% endif %}
+        <a href="{{ item.url }}" class="{{ 'active' if item.number == pagination.page }}"
+           {% if item.number == pagination.page %}aria-current="page"{% endif %}>{{ item.number }}</a>
+        {% set previous_number.value = item.number %}
+      {% endfor %}
+      {% if pagination.next_url %}
+      <a href="{{ pagination.next_url }}" aria-label="Sonraki sayfa"><i class="bi bi-chevron-right"></i></a>
+      {% endif %}
+    </div>
+  </nav>
+  {% endif %}
+  {% else %}
+  <div class="registry-empty">
+    <i class="bi bi-search" aria-hidden="true"></i>
+    <h3>Kayıt bulunamadı</h3>
+    <p>Tablet tutanak numarasını veya kişi/firma adını kontrol edin ya da filtreleri temizleyin.</p>
+    <div>
+      <a class="btn btn-outline-secondary" href="{{ url_for('sirketler') }}">Filtreleri temizle</a>
+      <a class="btn btn-bordo" href="{{ url_for('sirket_ekle') }}">Yeni İPC kaydı oluştur</a>
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Ana Panel{% endblock %}
+{% block content %}
+<h1 class="visually-hidden">Ana Panel</h1>
+
+<section class="tanitim dashboard-banner" id="tanitim"
+         aria-label="İPC denetim süreçleri tanıtımı">
+  <article class="slayt slayt-1"
+           style="--slide-image:url('{{ url_for('static', filename='img/ipc-denetim-terazi.webp') }}')">
+    <div class="slayt-gorsel" aria-hidden="true"></div>
+    <div class="slayt-perde" aria-hidden="true"></div>
+    <div class="slayt-icerik">
+      <h2><i class="bi bi-bullseye me-2" aria-hidden="true"></i>Ölçümde güven, kayıtta bütünlük</h2>
+      <p>Denetim ve ölçü aleti bilgileri, gerçek Excel sütunlarıyla aynı yapıda korunur.</p>
+    </div>
+  </article>
+
+  <article class="slayt slayt-2"
+           style="--slide-image:url('{{ url_for('static', filename='img/ipc-denetim-akaryakit.webp') }}')">
+    <div class="slayt-gorsel" aria-hidden="true"></div>
+    <div class="slayt-perde" aria-hidden="true"></div>
+    <div class="slayt-icerik">
+      <h2><i class="bi bi-rulers me-2" aria-hidden="true"></i>Denetimden tahsilata tek iz</h2>
+      <p>Ceza, tebligat, ödeme, itiraz ve vergi dairesi süreci aynı kayıt üzerinden takip edilir.</p>
+    </div>
+  </article>
+
+  <article class="slayt slayt-3"
+           style="--slide-image:url('{{ url_for('static', filename='img/ipc-denetim-tablet.webp') }}')">
+    <div class="slayt-gorsel" aria-hidden="true"></div>
+    <div class="slayt-perde" aria-hidden="true"></div>
+    <div class="slayt-icerik">
+      <h2><i class="bi bi-calendar2-check me-2" aria-hidden="true"></i>Kritik süreler gözden kaçmaz</h2>
+      <p>Tebliğ tarihinden başlayan 30 günlük süre, ödeme ve kesinleşme bilgileriyle birlikte güncel tutulur.</p>
+    </div>
+  </article>
+
+  <div class="banner-controls">
+    <div class="slayt-noktalar" aria-hidden="true">
+      <span class="nokta nokta-1"></span>
+      <span class="nokta nokta-2"></span>
+      <span class="nokta nokta-3"></span>
+    </div>
+    <button class="banner-motion-toggle" id="bannerMotionToggle" type="button"
+            aria-label="Tanıtım geçişini durdur" aria-pressed="false">
+      <i class="bi bi-pause-fill" aria-hidden="true"></i>
+    </button>
+  </div>
+</section>
+
+<section class="dashboard-metrics" aria-label="İPC genel özeti">
+  <div>
+    <span>Toplam kayıt</span>
+    <strong>{{ toplam }}</strong>
+    <small>Sistemdeki tüm İPC kayıtları</small>
+  </div>
+  <div>
+    <span>Toplam ceza tutarı</span>
+    <strong>{{ toplam_ceza|money_tr }}</strong>
+    <small>Kayıtlardaki ceza toplamı</small>
+  </div>
+  <div>
+    <span>Kayda geçen tahsilat</span>
+    <strong>{{ tahsil_edilen|money_tr }}</strong>
+    <small>Doğrudan ve vergi tahsilatları</small>
+  </div>
+  <div class="{{ 'metric-critical' if uyari_sayisi else '' }}">
+    <span>Dikkat gerektiren</span>
+    <strong>{{ uyari_sayisi }}</strong>
+    <small>
+      {% if uyari_sayisi %}Süresi yaklaşan veya geçen kayıtlar
+      {% else %}Yaklaşan kritik süre bulunmuyor{% endif %}
+    </small>
+  </div>
+</section>
+
+{% if toplam %}
+<div class="dashboard-charts">
+  <section class="dashboard-panel chart-panel" aria-labelledby="year-chart-title">
+    <header class="panel-heading">
+      <div>
+        <h2 id="year-chart-title">Yıllara göre İPC eğilimi</h2>
+        <p>Kayıt adedi ve toplam ceza tutarı birlikte gösterilir.</p>
+      </div>
+    </header>
+    <div class="chart-frame">
+      <canvas id="yearTrendChart" role="img"
+              aria-label="Yıllara göre İPC kayıt adedi ve toplam ceza tutarı grafiği"></canvas>
+    </div>
+  </section>
+
+  <section class="dashboard-panel chart-panel chart-panel-compact" aria-labelledby="status-chart-title">
+    <header class="panel-heading">
+      <div>
+        <h2 id="status-chart-title">Kayıtların süreç durumu</h2>
+        <p>Tüm kayıtların güncel durum dağılımı.</p>
+      </div>
+    </header>
+    <div class="chart-frame chart-frame-donut">
+      <canvas id="statusDistributionChart" role="img"
+              aria-describedby="statusChartDescription"></canvas>
+      <p class="visually-hidden" id="statusChartDescription">
+        {% for status in status_groups %}
+          {{ status.label }}: {{ status.count }} kayıt{% if not loop.last %}; {% endif %}
+        {% endfor %}
+      </p>
+    </div>
+  </section>
+</div>
+{% else %}
+<section class="dashboard-empty-state" aria-labelledby="empty-dashboard-title">
+  <div class="empty-state-icon"><i class="bi bi-database-add" aria-hidden="true"></i></div>
+  <h2 id="empty-dashboard-title">Henüz İPC kaydı bulunmuyor</h2>
+  <p>Gerçek Excel verisini aktararak veya ilk İPC kaydını oluşturarak paneli kullanmaya başlayın. Veriler geldiğinde süre uyarıları, eğilimler ve süreç dağılımı burada otomatik oluşur.</p>
+  <div class="dashboard-empty-actions">
+    {% if session.role == 'admin' %}
+    <a class="btn btn-bordo" href="{{ url_for('veri_aktar') }}">
+      <i class="bi bi-database-up me-2"></i>Excel verisini aktar
+    </a>
+    {% else %}
+    <a class="btn btn-outline-bordo" href="{{ url_for('sirket_ekle') }}">
+      <i class="bi bi-plus-lg me-2"></i>İlk kaydı oluştur
+    </a>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+<script type="application/json" id="dash-data">{{ chart_data|tojson }}</script>
+{% endblock %}
+{% block scripts %}
+{% if toplam %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+{% endif %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

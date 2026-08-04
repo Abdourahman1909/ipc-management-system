@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% block title %}Excel Verisini Aktar{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start gap-3 mb-3 flex-wrap">
+  <div>
+    <h5 class="fw-bold mb-1">
+      <i class="bi bi-database-up me-2" style="color:var(--bordo)"></i>Excel Verisini Aktar
+    </h5>
+    <p class="text-secondary mb-0">
+      Müdürlükteki geçmiş İPC kayıtlarını önce kontrol eder, yalnızca açık onayınızdan sonra sisteme aktarır.
+    </p>
+  </div>
+  <span class="badge text-bg-secondary px-3 py-2">
+    <i class="bi bi-shield-lock me-1"></i>Yalnızca yönetici
+  </span>
+</div>
+
+{% if result %}
+<div class="alert alert-success shadow-sm border-0" role="status">
+  <h6 class="fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Aktarım tamamlandı</h6>
+  <p class="mb-2"><strong>{{ result.filename }}</strong> güvenli şekilde işlendi.</p>
+  <div class="row g-2 small">
+    <div class="col-md-3"><strong>{{ result.source_rows }}</strong> kaynak satırı</div>
+    <div class="col-md-3"><strong>{{ result.inserted }}</strong> yeni kayıt</div>
+    <div class="col-md-3"><strong>{{ result.updated }}</strong> güncellenen kayıt</div>
+    <div class="col-md-3"><strong>{{ result.skipped }}</strong> atlanan kayıt</div>
+  </div>
+  <hr>
+  <div class="small">
+    Aktarım öncesi yedek: <code>{{ result.backup_name }}</code>
+    {% if result.warning_count %} · <strong>{{ result.warning_count }}</strong> kaynak veri uyarısı ham değerleriyle korundu.{% endif %}
+  </div>
+</div>
+<div class="d-flex gap-2 flex-wrap">
+  <a class="btn btn-bordo" href="{{ url_for('sirketler') }}">
+    <i class="bi bi-table me-1"></i>Aktarılan Kayıtları Gör
+  </a>
+  <a class="btn btn-outline-secondary" href="{{ url_for('veri_aktar') }}">
+    <i class="bi bi-arrow-repeat me-1"></i>Başka Dosya Aktar
+  </a>
+</div>
+
+{% elif preview %}
+{% if preview.previous_import %}
+<div class="alert alert-warning shadow-sm">
+  <i class="bi bi-clock-history me-1"></i>
+  <strong>Bu dosyanın aynısı daha önce aktarılmış.</strong>
+  Son aktarım: {{ preview.previous_import.imported_at }} ·
+  {{ preview.previous_import.inserted_rows }} yeni,
+  {{ preview.previous_import.updated_rows }} güncellenen kayıt.
+</div>
+{% endif %}
+
+<div class="card mb-3">
+  <div class="card-header bg-white py-3">
+    <h6 class="fw-bold mb-0"><i class="bi bi-file-earmark-excel me-1 text-success"></i>Önizleme — {{ preview.filename }}</h6>
+  </div>
+  <div class="card-body">
+    <section class="record-count-proof mb-4" aria-labelledby="record-count-title">
+      <div class="record-count-result">
+        <span id="record-count-title">Kesin sonuç</span>
+        <strong>{{ preview.record_count }}</strong>
+        <small>gerçek İPC kaydı</small>
+      </div>
+      <div class="record-count-equation" aria-label="Gerçek kayıt sayısının hesabı">
+        <span><strong>{{ preview.source_nonempty_row_count }}</strong> dolu görünen satır</span>
+        <b aria-hidden="true">−</b>
+        <span><strong>{{ preview.template_row_count }}</strong> boş şablon satırı</span>
+        {% if preview.rejected_row_count %}
+        <b aria-hidden="true">−</b>
+        <span><strong>{{ preview.rejected_row_count }}</strong> okunamayan satır</span>
+        {% endif %}
+        <b aria-hidden="true">=</b>
+        <span class="record-count-confirmed"><strong>{{ preview.record_count }}</strong> gerçek kayıt</span>
+      </div>
+      <p>
+        Yalnızca Sıra No, yıl, kurum, hukuki dayanak ve otomatik formül taşıyan satırlar
+        kayıt sayılmaz. Bir satırda firma, ceza tutarı, ölçü aleti, tutanak veya işlem
+        bilgisi bulunduğunda gerçek kayıt kabul edilir.
+      </p>
+    </section>
+
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-xl-3">
+        <div class="import-stat">
+          <span>Gerçek İPC kaydı</span><strong>{{ preview.record_count }}</strong>
+        </div>
+      </div>
+      <div class="col-6 col-xl-3">
+        <div class="import-stat">
+          <span>Dolu görünen satır</span><strong>{{ preview.source_nonempty_row_count }}</strong>
+        </div>
+      </div>
+      <div class="col-6 col-xl-3">
+        <div class="import-stat">
+          <span>Atlanan boş şablon</span><strong class="{{ 'text-warning' if preview.template_row_count else '' }}">{{ preview.template_row_count }}</strong>
+        </div>
+      </div>
+      <div class="col-6 col-xl-3">
+        <div class="import-stat">
+          <span>Veri uyarısı</span><strong class="{{ 'text-danger' if preview.warning_count else '' }}">{{ preview.warning_count }}</strong>
+        </div>
+      </div>
+    </div>
+    <dl class="row small mb-0">
+      <dt class="col-sm-3">Çalışma sayfası</dt><dd class="col-sm-9">{{ preview.sheet_name }}</dd>
+      <dt class="col-sm-3">Başlık satırı</dt><dd class="col-sm-9">{{ preview.header_row }}</dd>
+      <dt class="col-sm-3">Dolu veri satırları</dt><dd class="col-sm-9">{{ preview.source_row_range or "—" }}</dd>
+      <dt class="col-sm-3">Gerçek kayıt satırları</dt><dd class="col-sm-9"><strong>{{ preview.record_row_range or "—" }}</strong></dd>
+      <dt class="col-sm-3">Atlanan şablon satırları</dt><dd class="col-sm-9">{{ preview.template_row_range or "Yok" }}</dd>
+      <dt class="col-sm-3">Algılanan sütun</dt><dd class="col-sm-9">{{ preview.mapped_count }}</dd>
+      <dt class="col-sm-3">Aktarım karşılaştırması</dt>
+      <dd class="col-sm-9">
+        <strong class="text-success">{{ preview.new_count }}</strong> yeni kayıt ·
+        <strong class="{{ 'text-warning' if preview.duplicate_count else '' }}">{{ preview.duplicate_count }}</strong> çakışan Sıra No
+      </dd>
+      <dt class="col-sm-3">Toplam ceza tutarı</dt>
+      <dd class="col-sm-9">{{ "{:,.0f}".format(preview.total_amount|float).replace(",", ".") }} TL</dd>
+      <dt class="col-sm-3">Yıllara göre kayıt</dt>
+      <dd class="col-sm-9">
+        {% for year, count in preview.years.items() %}
+        <span class="badge text-bg-light border me-1 mb-1">{{ year }}: {{ count }}</span>
+        {% endfor %}
+      </dd>
+    </dl>
+  </div>
+</div>
+
+<div class="accordion mb-3" id="importDetails">
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#mapping">
+        <i class="bi bi-arrow-left-right me-2"></i>Sütun eşleştirmesi ({{ preview.mapping|length }})
+      </button>
+    </h2>
+    <div id="mapping" class="accordion-collapse collapse" data-bs-parent="#importDetails">
+      <div class="accordion-body p-0">
+        <div class="table-responsive">
+          <table class="table mb-0 align-middle">
+            <thead><tr><th>Excel</th><th>Kaynak Başlığı</th><th>Sistemdeki Alan</th></tr></thead>
+            <tbody>
+              {% for item in preview.mapping %}
+              <tr><td><code>{{ item.column }}</code></td><td>{{ item.source }}</td><td>{{ item.target }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#cleanup">
+        <i class="bi bi-magic me-2"></i>Güvenli normalleştirmeler
+      </button>
+    </h2>
+    <div id="cleanup" class="accordion-collapse collapse" data-bs-parent="#importDetails">
+      <div class="accordion-body">
+        {% if preview.normalizations %}
+        <ul class="mb-0">
+          {% for label, count in preview.normalizations.items() %}
+          <li><strong>{{ count }}</strong> — {{ label }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <span class="text-secondary">Normalleştirme gerektiren hücre bulunmadı.</span>
+        {% endif %}
+        <p class="small text-secondary mt-2 mb-0">
+          Tarihler GG.AA.YYYY biçimine, tutarlar gerçek sayıya çevrilir. Okunamayan ham değerler silinmez;
+          “Kaynak Dosyadaki Not / Uyarı” alanında saklanır.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#warnings">
+        <i class="bi bi-exclamation-triangle me-2"></i>Kaynak veri uyarıları ({{ preview.warning_count }})
+      </button>
+    </h2>
+    <div id="warnings" class="accordion-collapse collapse" data-bs-parent="#importDetails">
+      <div class="accordion-body p-0">
+        {% if preview.warning_samples %}
+        <div class="table-responsive" style="max-height:380px">
+          <table class="table table-sm mb-0">
+            <thead class="sticky-top"><tr><th>Satır</th><th>Sütun</th><th>Açıklama</th></tr></thead>
+            <tbody>
+              {% for warning in preview.warning_samples %}
+              <tr><td>{{ warning.row }}</td><td><code>{{ warning.column }}</code></td><td>{{ warning.message }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="p-3 text-secondary">Uyarı bulunmadı.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border border-warning-subtle">
+  <div class="card-body">
+    <h6 class="fw-bold"><i class="bi bi-shield-check me-1"></i>Aktarımı Onayla</h6>
+    <p class="small text-secondary">
+      Onaydan hemen önce mevcut SQLite veritabanının otomatik yedeği alınır.
+      Kaynak Excel dosyası hiçbir zaman değiştirilmez.
+    </p>
+    <form method="post" action="{{ url_for('veri_aktar_onayla') }}">
+      <input type="hidden" name="token" value="{{ token }}">
+      {% if preview.duplicate_count %}
+      <fieldset class="mb-3">
+        <legend class="form-label mb-2">Çakışan {{ preview.duplicate_count }} Sıra No için ne yapılsın?</legend>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="conflict_mode" id="skip" value="skip" checked>
+          <label class="form-check-label" for="skip">
+            <strong>Mevcut kayıtları koru</strong> — çakışan satırları atla
+          </label>
+        </div>
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="radio" name="conflict_mode" id="update" value="update">
+          <label class="form-check-label" for="update">
+            <strong>Excel verisiyle güncelle</strong> — mevcut personel bilgisini koruyarak kaynak alanlarını yenile
+          </label>
+        </div>
+      </fieldset>
+      {% else %}
+      <input type="hidden" name="conflict_mode" value="skip">
+      {% endif %}
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="confirmImport" required>
+        <label class="form-check-label" for="confirmImport">
+          Önizleme sonuçlarını kontrol ettim; aktarımı başlatmak istiyorum.
+        </label>
+      </div>
+      <button class="btn btn-bordo px-4" type="submit">
+        <i class="bi bi-database-check me-1"></i>Yedeği Al ve Aktar
+      </button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('veri_aktar') }}">Vazgeç</a>
+    </form>
+  </div>
+</div>
+
+{% else %}
+<div class="row g-3">
+  <div class="col-xl-8">
+    <div class="card">
+      <div class="card-body p-4">
+        <h6 class="fw-bold"><i class="bi bi-file-earmark-spreadsheet me-1 text-success"></i>Kaynak dosyayı seçin</h6>
+        <p class="text-secondary small">
+          Beklenen dosya, “Sıra No”, “Yıl”, “Hukuki Dayanak”, “Cezanın Muhatabı” ve
+          “Verilen Cezanın Tutarı” başlıklarını taşıyan İPC Excel tablosudur.
+        </p>
+        <form method="post" enctype="multipart/form-data">
+          <label class="form-label" for="workbook">Excel dosyası (.xlsx / .xlsm)</label>
+          <input class="form-control mb-3" id="workbook" name="workbook" type="file"
+                 accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                 required>
+          <button class="btn btn-bordo px-4" type="submit">
+            <i class="bi bi-search me-1"></i>Dosyayı Kontrol Et
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h6 class="fw-bold"><i class="bi bi-lock me-1"></i>Aktarım güvenliği</h6>
+        <ul class="small text-secondary ps-3 mb-0">
+          <li class="mb-2">Bu adım veritabanına kayıt yazmaz; yalnızca önizleme oluşturur.</li>
+          <li class="mb-2">Bozuk ve eşleşmeyen hücreler açıkça raporlanır.</li>
+          <li class="mb-2">Aktarım öncesi otomatik SQLite yedeği alınır.</li>
+          <li>Yüklediğiniz asıl Excel dosyası değiştirilmez.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

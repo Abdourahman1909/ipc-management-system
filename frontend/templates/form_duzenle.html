@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Formu Düzenle{% endblock %}
+{% block content %}
+<h5 class="fw-bold mb-3"><i class="bi bi-ui-checks me-2" style="color:var(--bordo)"></i>Formu Düzenle</h5>
+<div class="alert alert-warning shadow-sm border-0" style="border-left:5px solid #B8860B !important">
+  <i class="bi bi-exclamation-triangle me-1"></i>
+  <strong>Uyarı:</strong> A–AB sütunları gerçek İPC Excel dosyasının sırasına göre eşleştirilmiştir.
+  Bir alanı silmek veya veri tipini değiştirmek; içe aktarımı, mevcut kayıtları ve dışa aktarılan
+  Excel dosyalarını etkileyebilir. Her işlem öncesi onayınız istenecektir.
+</div>
+
+<div class="card mb-4">
+<div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+  <div>
+    <h6 class="fw-bold mb-1"><i class="bi bi-file-earmark-spreadsheet me-1 text-success"></i>Gerçek Excel Sütunları</h6>
+    <div class="small text-secondary">Kaynak dosyadaki 28 konum: A–AB. H sütununun başlığı boştur; içindeki uyarılar “Kaynak Notu / Uyarısı” alanında korunur.</div>
+  </div>
+  <span class="badge text-bg-success px-3 py-2">28 / 28 eşleşti</span>
+</div>
+<div class="card-body p-0">
+<div class="table-responsive">
+<table class="table align-middle mb-0">
+  <thead><tr><th>#</th><th>Excel</th><th>Sütun Adı</th><th>Veri Tipi</th><th>Zorunlu</th><th>Seçenekler</th><th style="width:170px">İşlem</th></tr></thead>
+  <tbody>
+  {% for f in official_fields %}
+  <tr>
+    <td>{{ loop.index }}</td>
+    <td>
+      {% if excel_columns.get(f.field_key) %}
+      <span class="excel-col-badge">{{ excel_columns.get(f.field_key) }}</span>
+      {% else %}
+      <span class="badge text-bg-light border text-secondary">Özel</span>
+      {% endif %}
+    </td>
+    <td>{{ f.label }} {% if f.is_system %}<span class="badge bg-secondary">Sistem</span>{% endif %}</td>
+    <td><code>{{ f.datatype }}</code></td>
+    <td>{{ "Evet" if f.required else "Hayır" }}</td>
+    <td class="small text-secondary">{{ f.options|join(", ") if f.options else "—" }}</td>
+    <td>
+      {% if not f.is_system %}
+      <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#edit{{ f.id }}"><i class="bi bi-pencil"></i></button>
+      {% if not excel_columns.get(f.field_key) %}
+      <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#del{{ f.id }}"><i class="bi bi-trash"></i></button>
+      {% else %}
+      <span class="badge text-bg-light border text-secondary ms-1" title="Excel eşleştirmesini korumak için silinemez">Eşleşmiş</span>
+      {% endif %}
+      {% else %}<span class="text-secondary small">Değiştirilemez</span>{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+</div></div>
+
+{% for f in fields if not f.is_system %}
+<div class="modal fade" id="edit{{ f.id }}" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form method="post" action="{{ url_for('form_alan_guncelle', fid=f.id) }}">
+      <div class="modal-header bg-warning-subtle">
+        <h6 class="modal-title fw-bold"><i class="bi bi-pencil me-1"></i>Sütunu Düzenle — Onay Gerekli</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Bu sütunu değiştirmenin mevcut kayıtlara etkisi olabilir. Devam ederek onaylamış olursunuz.</p>
+        <div class="mb-2"><label class="form-label small">Sütun Adı</label>
+          <input name="label" class="form-control" value="{{ f.label }}" required></div>
+        <div class="mb-2"><label class="form-label small">Veri Tipi</label>
+          <select name="datatype" class="form-select">
+            {% for dt in datatypes %}<option {{ "selected" if dt==f.datatype }}>{{ dt }}</option>{% endfor %}
+          </select></div>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" name="required" id="req{{ f.id }}" {{ "checked" if f.required }}>
+          <label class="form-check-label small" for="req{{ f.id }}">Zorunlu alan</label></div>
+        <div class="mb-2"><label class="form-label small">Açılır liste seçenekleri (her satıra bir tane, liste değilse boş bırakın)</label>
+          <textarea name="options" class="form-control" rows="4">{{ f.options|join("\n") if f.options }}</textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+        <button class="btn btn-bordo">Onaylıyorum, Kaydet</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+{% if not excel_columns.get(f.field_key) %}
+<div class="modal fade" id="del{{ f.id }}" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form method="post" action="{{ url_for('form_alan_sil', fid=f.id) }}">
+      <div class="modal-header bg-danger text-white">
+        <h6 class="modal-title fw-bold"><i class="bi bi-exclamation-octagon me-1"></i>Sütunu Sil — Onay Gerekli</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        “<strong>{{ f.label }}</strong>” sütununu formdan kaldırmak üzeresiniz. Bu işlemin sonuçları olabilir
+        (bu sütun yeni formlarda görünmeyecektir). Silmek istediğinizden emin misiniz?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+        <button class="btn btn-danger">Evet, Sil</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+{% endif %}
+{% endfor %}
+
+<div class="card"><div class="card-body">
+  <h6 class="fw-bold"><i class="bi bi-plus-circle me-1"></i>Yeni Sütun Ekle</h6>
+  <form method="post" action="{{ url_for('form_alan_ekle') }}" class="row g-3">
+    <div class="col-md-4"><label class="form-label small">Sütun Adı</label>
+      <input name="label" class="form-control" required placeholder="Örn: Denetim Bölgesi"></div>
+    <div class="col-md-3"><label class="form-label small">Veri Tipi</label>
+      <select name="datatype" class="form-select">
+        {% for dt in datatypes %}<option>{{ dt }}</option>{% endfor %}
+      </select></div>
+    <div class="col-md-2 d-flex align-items-end">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="required" id="newreq">
+        <label class="form-check-label small" for="newreq">Zorunlu</label>
+      </div>
+    </div>
+    <div class="col-md-3"><label class="form-label small">Liste seçenekleri (isteğe bağlı)</label>
+      <textarea name="options" class="form-control" rows="1" placeholder="Her satıra bir seçenek"></textarea></div>
+    <div class="col-12"><button class="btn btn-bordo"><i class="bi bi-plus-lg me-1"></i>Sütunu Ekle ve Kaydet</button></div>
+  </form>
+</div></div>
+{% endblock %}

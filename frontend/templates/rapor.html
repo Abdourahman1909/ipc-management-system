@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Raporlar{% endblock %}
+{% block content %}
+<nav aria-label="Sayfa yolu" class="page-breadcrumb">
+  <a href="{{ url_for('dashboard') }}">Ana Panel</a>
+  <i class="bi bi-chevron-right" aria-hidden="true"></i>
+  <span aria-current="page">Raporlar</span>
+</nav>
+
+<header class="page-heading">
+  <div>
+    <h1>Raporlar</h1>
+    <p>İhtiyacınıza uygun rapor kapsamını seçin, kayıtları süzün ve resmi çıktıyı oluşturun.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-outline-secondary" href="{{ url_for('sirketler',
+      q=request.args.get('q', ''),
+      yil=request.args.get('yil', ''),
+      durum=request.args.get('durum', ''),
+      hukuki_dayanak=request.args.get('hukuki_dayanak', '')) }}">
+      <i class="bi bi-journal-text me-2"></i>İPC kayıtlarına dön
+    </a>
+  </div>
+</header>
+
+<form method="get" class="report-builder">
+  <section class="report-section" aria-labelledby="report-type-title">
+    <div class="section-number" aria-hidden="true">1</div>
+    <div class="report-section-content">
+      <header>
+        <h2 id="report-type-title">Rapor kapsamını seçin</h2>
+        <p>Her kapsam, ilgili işlem için gerekli sütunları hazır olarak getirir.</p>
+      </header>
+      <div class="report-options">
+        {% for key, preset in report_presets.items() %}
+        <label class="report-option">
+          <input type="radio" name="rapor_turu" value="{{ key }}"
+                 {{ "checked" if report_type == key }}>
+          <span>
+            <strong>{{ preset.title }}</strong>
+            <small>{{ preset.description }}</small>
+          </span>
+          <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="report-section" aria-labelledby="report-filter-title">
+    <div class="section-number" aria-hidden="true">2</div>
+    <div class="report-section-content">
+      <header>
+        <h2 id="report-filter-title">Kayıt kapsamını belirleyin</h2>
+        <p>Boş bırakılan alanlar raporu sınırlandırmaz.</p>
+      </header>
+      <div class="report-filters">
+        <div class="wide">
+          <label for="reportSearch">Tablet tutanak no veya kişi/firma adı</label>
+          <div class="input-with-icon">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input id="reportSearch" class="form-control" type="search" name="q"
+                   value="{{ request.args.get('q', '') }}"
+                   placeholder="Örn. 41-E7E8EC31 veya firma adı">
+          </div>
+        </div>
+        <div>
+          <label for="reportYearFrom">Başlangıç yılı</label>
+          <select id="reportYearFrom" name="yil_baslangic" class="form-select">
+            <option value="">En eski yıl</option>
+            {% for year in years %}
+            <option value="{{ year }}" {{ "selected" if request.args.get('yil_baslangic', request.args.get('yil', '')) == year }}>{{ year }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="reportYearTo">Bitiş yılı</label>
+          <select id="reportYearTo" name="yil_bitis" class="form-select">
+            <option value="">En yeni yıl</option>
+            {% for year in years %}
+            <option value="{{ year }}" {{ "selected" if request.args.get('yil_bitis', request.args.get('yil', '')) == year }}>{{ year }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="reportStatus">Durum</label>
+          <select id="reportStatus" name="durum" class="form-select">
+            <option value="">Tüm durumlar</option>
+            {% for status in statuses %}
+            <option value="{{ status.key }}" {{ "selected" if request.args.get('durum') == status.key }}>{{ status.label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="reportBasis">Hukuki dayanak</label>
+          <select id="reportBasis" name="hukuki_dayanak" class="form-select">
+            <option value="">Tüm hukuki dayanaklar</option>
+            {% for basis in legal_bases %}
+            <option value="{{ basis }}" {{ "selected" if request.args.get('hukuki_dayanak') == basis }}>{{ basis }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="report-section report-action-section" aria-labelledby="report-create-title">
+    <div class="section-number" aria-hidden="true">3</div>
+    <div class="report-section-content">
+      <header>
+        <h2 id="report-create-title">Raporu kontrol edin</h2>
+        <p>Seçiminize uyan <strong>{{ filtered_count }} kayıt</strong> rapora dahil edilecek.</p>
+      </header>
+      <div class="report-actions">
+        <button class="btn btn-bordo" type="submit" name="onizle" value="1" data-no-loading="1">
+          <i class="bi bi-eye me-2"></i>Raporu önizle
+        </button>
+        <a class="btn btn-link-clean" href="{{ url_for('rapor') }}">Seçimleri temizle</a>
+      </div>
+    </div>
+  </section>
+</form>
+
+{% if preview %}
+<section class="report-preview" aria-labelledby="report-preview-title">
+  <header class="preview-heading">
+    <div>
+      <span>Rapor önizlemesi</span>
+      <h2 id="report-preview-title">{{ report_presets[report_type].title }}</h2>
+      <p>{{ bugun }} tarihinde {{ summary.record_count }} kayıtla oluşturuldu.</p>
+    </div>
+    <div class="page-actions">
+      <a class="btn btn-outline-danger" href="{{ url_for('rapor_pdf') }}?{{ request.query_string.decode() }}">
+        <i class="bi bi-file-earmark-pdf me-2"></i>PDF indir
+      </a>
+      <a class="btn btn-success" href="{{ url_for('rapor_excel') }}?{{ request.query_string.decode() }}">
+        <i class="bi bi-file-earmark-excel me-2"></i>Excel indir
+      </a>
+    </div>
+  </header>
+
+  <div class="report-summary" aria-label="Rapor özeti">
+    <div><span>Kayıt sayısı</span><strong>{{ summary.record_count }}</strong></div>
+    <div><span>Toplam ceza tutarı</span><strong>{{ summary.total_amount|money_tr }}</strong></div>
+    <div><span>Süresi işleyen</span><strong>{{ summary.active_count }}</strong></div>
+    <div><span>Süresi dolan</span><strong>{{ summary.expired_count }}</strong></div>
+    <div><span>Ödenen</span><strong>{{ summary.paid_count }}</strong></div>
+  </div>
+
+  {% if companies %}
+  <div class="report-table-wrap">
+    <table class="table report-table">
+      <thead>
+        <tr>{% for field in rapor_fields %}<th scope="col">{{ field.label }}</th>{% endfor %}</tr>
+      </thead>
+      <tbody>
+        {% for company in companies %}
+        <tr>
+          {% for field in rapor_fields %}
+          <td>
+            {% if field.datatype in ['DECIMAL', 'FLOAT / DOUBLE'] %}
+              {{ company_cell(company, field.field_key)|money_tr }}
+            {% else %}
+              {{ company_cell(company, field.field_key) or '—' }}
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="registry-empty compact">
+    <i class="bi bi-file-earmark-x" aria-hidden="true"></i>
+    <h3>Raporlanacak kayıt bulunamadı</h3>
+    <p>Arama veya filtreleri değiştirerek raporu yeniden önizleyin.</p>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

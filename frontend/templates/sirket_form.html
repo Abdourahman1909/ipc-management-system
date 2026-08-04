@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+{% set is_edit = mode == "duzenle" %}
+{% block title %}{{ "İPC Kaydını Düzenle" if is_edit else "Yeni İPC Kaydı" }}{% endblock %}
+{% block content %}
+<nav aria-label="Sayfa yolu" class="page-breadcrumb">
+  <a href="{{ url_for('dashboard') }}">Ana Panel</a>
+  <i class="bi bi-chevron-right" aria-hidden="true"></i>
+  <a href="{{ url_for('sirketler') }}">İPC Kayıtları</a>
+  <i class="bi bi-chevron-right" aria-hidden="true"></i>
+  <span aria-current="page">{{ "Kaydı düzenle" if is_edit else "Yeni kayıt" }}</span>
+</nav>
+
+<header class="page-heading">
+  <div>
+    <h1>{{ "İPC Kaydını Düzenle" if is_edit else "Yeni İPC Kaydı" }}</h1>
+    <p>
+      {% if is_edit %}
+        Sıra No {{ sira_no }} için ceza, tebligat, ödeme ve ek dosya bilgilerini güncelleyin.
+      {% else %}
+        İdari para cezasına ilişkin bilgileri bölümler halinde girin ve ek belgeleri kayda bağlayın.
+      {% endif %}
+    </p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('sirket_oku', sira_no=sira_no) if is_edit else url_for('sirketler') }}"
+       class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-2"></i>{{ "Kayıt ayrıntısına dön" if is_edit else "Kayıt listesine dön" }}
+    </a>
+  </div>
+</header>
+
+{% if session.role != 'admin' %}
+<div class="notice-panel notice-info" role="status">
+  <i class="bi bi-shield-check" aria-hidden="true"></i>
+  <div>
+    <strong>Yönetici onayı uygulanır</strong>
+    <p>Kaydettiğiniz değişiklikler ve ek dosyalar, kayda uygulanmadan önce yönetici incelemesine gönderilir.</p>
+  </div>
+</div>
+{% endif %}
+
+{% if errors %}
+<div class="notice-panel notice-danger" role="alert">
+  <i class="bi bi-exclamation-octagon" aria-hidden="true"></i>
+  <div>
+    <strong>Formda {{ errors|length }} alanın düzeltilmesi gerekiyor</strong>
+    <p>İşaretlenen alanlardaki açıklamaları kontrol edip formu yeniden kaydedin.</p>
+  </div>
+</div>
+{% endif %}
+
+{% if attachment_error %}
+<div class="notice-panel notice-danger" role="alert">
+  <i class="bi bi-paperclip" aria-hidden="true"></i>
+  <div>
+    <strong>Ek dosya yüklenemedi</strong>
+    <p>{{ attachment_error }} Dosyayı yeniden seçerek tekrar deneyin.</p>
+  </div>
+</div>
+{% endif %}
+
+<form method="post" id="sirketForm" enctype="multipart/form-data" class="record-form">
+  {% if is_edit %}
+  <input type="hidden" name="step" value="kaydet">
+  <input type="hidden" name="sira_no" value="{{ sira_no }}">
+  {% endif %}
+
+  <div class="record-form-layout">
+    <div class="record-form-main">
+      <section class="form-system-summary" aria-label="Sistem bilgileri">
+        <div>
+          <span>Sıra No</span>
+          <strong>{{ sira_no if is_edit else "Kaydedilince atanır" }}</strong>
+        </div>
+        <div>
+          <span>Sorumlu personel</span>
+          <strong>{{ data.get('defter_sira_no') or session.user_name }}</strong>
+        </div>
+      </section>
+
+      {% for section in sections %}
+      <section class="form-section" aria-labelledby="form-section-{{ loop.index }}">
+        {% set section_keys = section.fields|map(attribute='field_key')|list %}
+        <header>
+          <div>
+            <h2 id="form-section-{{ loop.index }}">{{ section.title }}</h2>
+            <p>{{ section.description }}</p>
+          </div>
+          <span>{{ section.fields|length - (1 if 'olcu_aleti_sayisi' in section_keys and 'olcu_aleti_cinsi' in section_keys else 0) }} alan</span>
+        </header>
+
+        <div class="form-field-grid">
+          {% for f in section.fields %}
+          {% set hata = errors.get(f.field_key) %}
+          {% set val = data.get(f.field_key, "") %}
+          {% if f.field_key == "olcu_aleti_sayisi" %}
+          {% set alet_hatasi = errors.get("olcu_aletleri") %}
+          {% set alet_kalemleri = instrument_items_for_form(data) %}
+          {% set alet_turleri = instrument_type_options() %}
+          <fieldset class="form-field form-field-wide instrument-editor {{ 'instrument-editor-invalid' if alet_hatasi }}"
+                    data-instrument-editor>
+            <legend>
+              Ölçü aletleri
+              <span class="required-mark" aria-hidden="true">*</span>
+              <span class="visually-hidden"> (zorunlu)</span>
+            </legend>
+            <p class="instrument-help">Her ölçü aleti cinsini kendi sayısıyla birlikte ekleyin.</p>
+            <div class="instrument-rows" data-instrument-rows>
+              {% for item in alet_kalemleri %}
+              <div class="instrument-row" data-instrument-row>
+                <div>
+                  <label for="instrument-kind-{{ loop.index0 }}">Ölçü aleti cinsi</label>
+                  <select id="instrument-kind-{{ loop.index0 }}" name="olcu_aleti_cinsi"
+                          class="form-select {{ 'is-invalid' if alet_hatasi }}" required>
+                    <option value="">Seçiniz</option>
+                    {% for option in alet_turleri %}
+                    <option value="{{ option }}" {{ "selected" if item.cinsi == option }}>{{ option }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div>
+                  <label for="instrument-quantity-{{ loop.index0 }}">Sayısı</label>
+                  <input id="instrument-quantity-{{ loop.index0 }}" name="olcu_aleti_sayisi"
+                         class="form-control {{ 'is-invalid' if alet_hatasi }}"
+                         value="{{ item.sayisi }}" required inputmode="numeric"
+                         min="1" step="1" pattern="[1-9]\d*" placeholder="Örn. 3">
+                </div>
+                <button type="button" class="instrument-remove" data-instrument-remove
+                        aria-label="Bu ölçü aletini kaldır">
+                  <i class="bi bi-trash" aria-hidden="true"></i>
+                  <span>Kaldır</span>
+                </button>
+              </div>
+              {% endfor %}
+            </div>
+            <div class="instrument-footer">
+              <button type="button" class="btn btn-outline-bordo" data-instrument-add>
+                <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Başka ölçü aleti ekle
+              </button>
+              <output class="instrument-total" data-instrument-total aria-live="polite">
+                Toplam sayı hesaplanıyor
+              </output>
+            </div>
+            {% if alet_hatasi %}
+            <div class="invalid-feedback d-block"><i class="bi bi-x-circle me-1"></i>{{ alet_hatasi }}</div>
+            {% endif %}
+            <template data-instrument-template>
+              <div class="instrument-row" data-instrument-row>
+                <div>
+                  <label>Ölçü aleti cinsi</label>
+                  <select name="olcu_aleti_cinsi" class="form-select" required>
+                    <option value="">Seçiniz</option>
+                    {% for option in alet_turleri %}<option value="{{ option }}">{{ option }}</option>{% endfor %}
+                  </select>
+                </div>
+                <div>
+                  <label>Sayısı</label>
+                  <input name="olcu_aleti_sayisi" class="form-control" required
+                         inputmode="numeric" min="1" step="1" pattern="[1-9]\d*"
+                         placeholder="Örn. 3">
+                </div>
+                <button type="button" class="instrument-remove" data-instrument-remove
+                        aria-label="Bu ölçü aletini kaldır">
+                  <i class="bi bi-trash" aria-hidden="true"></i>
+                  <span>Kaldır</span>
+                </button>
+              </div>
+            </template>
+          </fieldset>
+          {% elif f.field_key != "olcu_aleti_cinsi" %}
+          <div class="form-field {{ 'form-field-wide' if f.datatype == 'TEXT' }}">
+            <label for="field-{{ f.field_key }}">
+              {{ f.label }}
+              {% if f.required %}<span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden"> (zorunlu)</span>{% endif %}
+            </label>
+
+            {% if f.options %}
+            <select id="field-{{ f.field_key }}" name="{{ f.field_key }}"
+                    class="form-select {{ 'is-invalid' if hata }}"
+                    {{ "required" if f.required }}>
+              <option value="">Seçiniz</option>
+              {% for option in f.options %}
+              <option value="{{ option }}" {{ "selected" if val == option }}>{{ option }}</option>
+              {% endfor %}
+            </select>
+            {% elif f.datatype == "BOOLEAN" %}
+            <select id="field-{{ f.field_key }}" name="{{ f.field_key }}"
+                    class="form-select {{ 'is-invalid' if hata }}"
+                    {{ "required" if f.required }}>
+              <option value="">Seçiniz</option>
+              <option value="Evet" {{ "selected" if val == "Evet" }}>Evet</option>
+              <option value="Hayır" {{ "selected" if val == "Hayır" }}>Hayır</option>
+            </select>
+            {% elif f.datatype == "TEXT" %}
+            <textarea id="field-{{ f.field_key }}" name="{{ f.field_key }}"
+                      class="form-control {{ 'is-invalid' if hata }}" rows="3"
+                      {{ "required" if f.required }}>{{ val }}</textarea>
+            {% else %}
+            <input id="field-{{ f.field_key }}" name="{{ f.field_key }}"
+                   class="form-control {{ 'is-invalid' if hata }}" value="{{ val }}"
+                   {{ "required" if f.required }}
+                   {% if f.field_key == "tablet_tutanak_no" %}
+                     placeholder="Örn. 41-E7E8EC31" pattern="\d{2}-[A-Za-z0-9]{8}"
+                     data-format-msg="Biçim: 2 rakam, tire, 8 harf/rakam olmalıdır (örn. 41-E7E8EC31)."
+                   {% elif f.field_key == "ebys" %}
+                     placeholder="Örn. 30.12.2024-5599177" pattern="\d{2}\.\d{2}\.\d{4}-\d{7}"
+                     data-format-msg="Biçim: GG.AA.YYYY-7 rakam olmalıdır (örn. 30.12.2024-5599177)."
+                   {% elif "TARİH" in f.datatype %}
+                     placeholder="GG.AA.YYYY"
+                     inputmode="numeric"
+                   {% elif f.datatype in ["DECIMAL", "FLOAT / DOUBLE"] %}
+                     placeholder="Örn. 16 000"
+                     inputmode="decimal"
+                   {% elif f.datatype == "INT" %}
+                     placeholder="Örn. 3"
+                     inputmode="numeric"
+                   {% endif %}>
+            {% endif %}
+
+            {% if hata %}
+            <div class="invalid-feedback d-block"><i class="bi bi-x-circle me-1"></i>{{ hata }}</div>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </section>
+      {% endfor %}
+    </div>
+
+    <aside class="record-form-aside" aria-label="Ek dosyalar ve kayıt işlemleri">
+      <section class="form-side-card deadline-card">
+        <div class="form-side-heading">
+          <i class="bi bi-calendar-check" aria-hidden="true"></i>
+          <h2>Kalan süre</h2>
+        </div>
+        <strong>Tebliğ tarihinden itibaren 30 gün</strong>
+        <p>Süre sistem tarafından otomatik hesaplanır; ödeme veya kesinleşme olduğunda takip kapanır.</p>
+      </section>
+
+      <section class="form-side-card">
+        <div class="form-side-heading">
+          <i class="bi bi-paperclip" aria-hidden="true"></i>
+          <h2>Ek dosyalar</h2>
+        </div>
+        <label class="file-drop" for="attachments" data-file-drop>
+          <i class="bi bi-cloud-arrow-up" aria-hidden="true" data-file-drop-icon></i>
+          <strong data-file-drop-title>Dosya seçin</strong>
+          <span data-file-drop-copy>Bir veya birden fazla belge, fotoğraf ya da video</span>
+          <input id="attachments" name="attachments" type="file" multiple
+                 aria-describedby="attachment-help attachment-selection-status"
+                 accept="image/*,video/*,.pdf,.txt,.csv,.zip,.rar,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+        </label>
+        <p class="file-help" id="attachment-help">En fazla 10 dosya; her dosya en fazla 100 MB olabilir. Dosya seçme penceresinde Ctrl veya Shift ile birden fazla dosya seçebilirsiniz.</p>
+
+        <section class="selected-files" data-selected-files hidden
+                 aria-labelledby="selected-files-title" aria-live="polite">
+          <div class="selected-files-heading">
+            <strong id="selected-files-title" data-selected-files-title>Seçilen dosyalar</strong>
+            <button type="button" data-files-clear>Tümünü kaldır</button>
+          </div>
+          <ul data-selected-files-list></ul>
+          <p id="attachment-selection-status" data-file-status></p>
+        </section>
+
+        {% if attachments %}
+        <div class="existing-files">
+          <div class="existing-files-heading">
+            <strong>Kayıtlı dosyalar</strong>
+            <span>{{ attachments|length }}</span>
+          </div>
+          <ul>
+            {% for attachment in attachments %}
+            <li>
+              <i class="bi bi-file-earmark" aria-hidden="true"></i>
+              <a href="{{ url_for('attachment_file', attachment_id=attachment.id, goruntule=1) }}"
+                 target="_blank" rel="noopener">{{ attachment.original_name }}</a>
+              <span>{{ attachment.file_size|filesize }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+          <p>Yeni seçilen dosyalar mevcut dosyalara eklenir.</p>
+        </div>
+        {% endif %}
+      </section>
+
+      <section class="form-submit-card">
+        <h2>{{ "Değişiklikleri kaydet" if is_edit else "Kaydı oluştur" }}</h2>
+        <p>
+          {% if session.role == 'admin' %}
+            Bilgileri kontrol ettikten sonra işlemi onaylayın.
+          {% else %}
+            İşlem yönetici onayına gönderilecektir.
+          {% endif %}
+        </p>
+        <button type="button" class="btn btn-bordo w-100"
+                data-bs-toggle="modal" data-bs-target="#confirmModal">
+          <i class="bi bi-check2-circle me-2"></i>{{ "Değişiklikleri kaydet" if is_edit else "Kaydı oluştur" }}
+        </button>
+        <a href="{{ url_for('sirket_oku', sira_no=sira_no) if is_edit else url_for('sirketler') }}"
+           class="btn btn-quiet w-100 mt-1">Vazgeç</a>
+      </section>
+    </aside>
+  </div>
+
+  <div class="modal fade" id="confirmModal" tabindex="-1"
+       aria-labelledby="confirmModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title fs-5" id="confirmModalTitle">
+              {{ "Değişiklikleri onaylayın" if is_edit else "Yeni kaydı onaylayın" }}
+            </h2>
+            <p class="mb-0 text-secondary small">
+              {{ "Sıra No " ~ sira_no if is_edit else "Yeni İPC kaydı" }}
+            </p>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"
+                  aria-label="Pencereyi kapat"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-0">
+            {% if session.role == 'admin' %}
+              {{ "Bu kayıt güncellenecek." if is_edit else "Yeni kayıt oluşturulacak." }}
+            {% else %}
+              İşleminiz ve seçtiğiniz dosyalar yönetici onayına gönderilecek.
+            {% endif %}
+            Devam etmek istiyor musunuz?
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Formu kontrol et</button>
+          <button type="submit" class="btn btn-bordo">
+            {{ "Evet, kaydet" if is_edit else "Evet, kaydı oluştur" }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/sirket_form.js') }}"></script>
+{% endblock %}

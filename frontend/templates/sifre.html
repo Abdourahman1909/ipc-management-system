@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Şifre Değiştir{% endblock %}
+{% block content %}
+<h5 class="fw-bold mb-3"><i class="bi bi-key me-2" style="color:var(--bordo)"></i>Şifre Değiştir</h5>
+<div class="card card-hover" style="max-width:520px"><div class="card-body">
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label" for="current-password">Mevcut Şifre</label>
+      <div class="password-control">
+        <input id="current-password" type="password" name="old" class="form-control"
+               autocomplete="current-password" required>
+        <button type="button" class="password-visibility" data-password-toggle
+                aria-controls="current-password" aria-pressed="false"
+                aria-label="Şifreyi göster" title="Şifreyi göster">
+          <i class="bi bi-eye" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="change-password">Yeni Şifre (en az 6 karakter)</label>
+      <div class="password-control">
+        <input id="change-password" type="password" name="password" class="form-control"
+               autocomplete="new-password" required minlength="6">
+        <button type="button" class="password-visibility" data-password-toggle
+                aria-controls="change-password" aria-pressed="false"
+                aria-label="Şifreyi göster" title="Şifreyi göster">
+          <i class="bi bi-eye" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="change-password-confirmation">Yeni Şifre (Tekrar)</label>
+      <div class="password-control">
+        <input id="change-password-confirmation" type="password" name="password2"
+               class="form-control" autocomplete="new-password" required minlength="6">
+        <button type="button" class="password-visibility" data-password-toggle
+                aria-controls="change-password-confirmation" aria-pressed="false"
+                aria-label="Şifreyi göster" title="Şifreyi göster">
+          <i class="bi bi-eye" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+    <button class="btn btn-bordo"><i class="bi bi-key me-1"></i>Şifreyi Güncelle</button>
+  </form>
+</div></div>
+{% endblock %}

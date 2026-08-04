@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Personel Yönetimi{% endblock %}
+{% block content %}
+<h5 class="fw-bold mb-3"><i class="bi bi-people me-2" style="color:var(--bordo)"></i>Personel Yönetimi</h5>
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card card-hover"><div class="card-body">
+      <h6 class="fw-bold mb-3"><i class="bi bi-person-plus me-1"></i>Yeni Kullanıcı Ekle</h6>
+      <form method="post">
+        <div class="mb-3"><label class="form-label">Ad Soyad</label>
+          <input name="name" class="form-control" required placeholder="Örn: Ayşe Yılmaz"></div>
+        <div class="mb-3"><label class="form-label">E-posta</label>
+          <input type="email" name="email" class="form-control" required placeholder="ayse@example.com"></div>
+        <div class="mb-3">
+          <label class="form-label" for="new-user-password">Şifre (en az 6 karakter)</label>
+          <div class="password-control">
+            <input id="new-user-password" type="password" name="password"
+                   class="form-control" autocomplete="new-password" required minlength="6">
+            <button type="button" class="password-visibility" data-password-toggle
+                    aria-controls="new-user-password" aria-pressed="false"
+                    aria-label="Şifreyi göster" title="Şifreyi göster">
+              <i class="bi bi-eye" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+        <div class="mb-3"><label class="form-label">Rol</label>
+          <select name="role" class="form-select">
+            <option value="personel" selected>Personel</option>
+            <option value="admin">Yönetici (Admin)</option>
+          </select></div>
+        <button class="btn btn-bordo w-100"><i class="bi bi-person-plus me-1"></i>Kullanıcıyı Ekle</button>
+      </form>
+    </div></div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card"><div class="card-body">
+      <h6 class="fw-bold mb-3"><i class="bi bi-list-ul me-1"></i>Kayıtlı Kullanıcılar</h6>
+      <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead><tr><th>#</th><th>Ad</th><th>E-posta</th><th>Rol</th><th style="width:160px">İşlem</th></tr></thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>{{ u.id }}</td><td>{{ u.name }}</td><td>{{ u.email }}</td>
+            <td><span class="badge {{ 'bg-danger' if u.role=='admin' else 'bg-secondary' }}">
+              {{ 'Yönetici' if u.role=='admin' else 'Personel' }}</span></td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                data-bs-target="#duz{{ u.id }}"><i class="bi bi-pencil"></i></button>
+              {% if u.id != session.user_id %}
+              <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                data-bs-target="#sil{{ u.id }}"><i class="bi bi-trash"></i></button>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+{% for u in users %}
+<div class="modal fade" id="duz{{ u.id }}" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form method="post" action="{{ url_for('personel_duzenle', uid=u.id) }}">
+      <div class="modal-header" style="background:var(--krem)">
+        <h6 class="modal-title fw-bold"><i class="bi bi-pencil me-1"></i>Kullanıcıyı Düzenle — {{ u.name }}</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2"><label class="form-label small">Ad Soyad</label>
+          <input name="name" class="form-control" value="{{ u.name }}" required></div>
+        <div class="mb-2"><label class="form-label small">E-posta</label>
+          <input type="email" name="email" class="form-control" value="{{ u.email }}" required></div>
+        <div class="mb-2"><label class="form-label small">Rol</label>
+          <select name="role" class="form-select">
+            <option value="personel" {{ "selected" if u.role=="personel" }}>Personel</option>
+            <option value="admin" {{ "selected" if u.role=="admin" }}>Yönetici (Admin)</option>
+          </select></div>
+        <div class="mb-2">
+          <label class="form-label small" for="edit-password-{{ u.id }}">
+            Yeni Şifre (değiştirmek istemiyorsanız boş bırakın)
+          </label>
+          <div class="password-control">
+            <input id="edit-password-{{ u.id }}" type="password" name="password"
+                   class="form-control" autocomplete="new-password" placeholder="••••••">
+            <button type="button" class="password-visibility" data-password-toggle
+                    aria-controls="edit-password-{{ u.id }}" aria-pressed="false"
+                    aria-label="Şifreyi göster" title="Şifreyi göster">
+              <i class="bi bi-eye" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+        <button class="btn btn-bordo">Kaydet</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+{% if u.id != session.user_id %}
+<div class="modal fade" id="sil{{ u.id }}" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form method="post" action="{{ url_for('personel_sil', uid=u.id) }}">
+      <div class="modal-header bg-danger text-white">
+        <h6 class="modal-title fw-bold"><i class="bi bi-exclamation-octagon me-1"></i>Kullanıcıyı Sil</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        “<strong>{{ u.name }}</strong>” kullanıcısını kalıcı olarak silmek üzeresiniz.
+        Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+        <button class="btn btn-danger">Evet, Sil</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+{% endif %}
+{% endfor %}
+{% endblock %}

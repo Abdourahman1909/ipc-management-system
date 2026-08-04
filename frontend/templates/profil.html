@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Profilim{% endblock %}
+{% block content %}
+<h5 class="fw-bold mb-3"><i class="bi bi-person-gear me-2" style="color:var(--bordo)"></i>Profil Bilgilerim</h5>
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card card-hover"><div class="card-body">
+      <h6 class="fw-bold mb-3"><i class="bi bi-card-list me-1"></i>Mevcut Bilgiler</h6>
+      <table class="table mb-0">
+        <tr><th>Ad Soyad</th><td>{{ user.name }}</td></tr>
+        <tr><th>E-posta</th><td>{{ user.email }}</td></tr>
+        <tr><th>Şifre</th><td>••••••••</td></tr>
+        <tr><th>Rol</th><td>{{ 'Yönetici (Admin)' if user.role=='admin' else 'Personel' }}</td></tr>
+        <tr><th>Kayıt Tarihi</th><td>{{ user.created_at }}</td></tr>
+      </table>
+    </div></div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card"><div class="card-body">
+      <h6 class="fw-bold mb-1"><i class="bi bi-pencil-square me-1"></i>Bilgilerimi Güncelle</h6>
+      <p class="small text-secondary">Bu işlem için yönetici onayı gerekmez; ancak yapılan değişiklik
+        yöneticilere bildirim olarak iletilir.</p>
+      <form method="post">
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label">Ad Soyad</label>
+            <input name="name" class="form-control" value="{{ user.name }}" required></div>
+          <div class="col-md-6"><label class="form-label">E-posta</label>
+            <input type="email" name="email" class="form-control" value="{{ user.email }}" required></div>
+          <div class="col-md-6">
+            <label class="form-label" for="profile-password">Yeni Şifre (isteğe bağlı)</label>
+            <div class="password-control">
+              <input id="profile-password" type="password" name="password"
+                     class="form-control" autocomplete="new-password"
+                     placeholder="Değiştirmeyecekseniz boş bırakın">
+              <button type="button" class="password-visibility" data-password-toggle
+                      aria-controls="profile-password" aria-pressed="false"
+                      aria-label="Şifreyi göster" title="Şifreyi göster">
+                <i class="bi bi-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="profile-password-confirmation">Yeni Şifre (Tekrar)</label>
+            <div class="password-control">
+              <input id="profile-password-confirmation" type="password" name="password2"
+                     class="form-control" autocomplete="new-password">
+              <button type="button" class="password-visibility" data-password-toggle
+                      aria-controls="profile-password-confirmation" aria-pressed="false"
+                      aria-label="Şifreyi göster" title="Şifreyi göster">
+                <i class="bi bi-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-bordo mt-3"><i class="bi bi-save me-1"></i>Değişiklikleri Kaydet</button>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
